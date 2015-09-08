@@ -69,12 +69,6 @@ node_templates:
     relationships:
       - type: cloudify.relationships.contained_in
         target: host
-    properties:
-      collectors_config:
-        CPUCollector: {}
-        DiskUsageCollector: {}
-        MemoryCollector: {}
-        NetworkCollector: {}
   
   nodejs_application:
     type: joscor.node.Nodejs.Application
