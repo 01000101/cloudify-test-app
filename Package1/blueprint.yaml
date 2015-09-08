@@ -22,6 +22,33 @@ inputs:
 
 # Definitions of node types
 node_types:
+  joscor.code.Server.Monitored:
+    derived_from: cloudify.nodes.Compute
+    interfaces:
+      cloudify.interfaces.monitoring_agent:
+        install:
+          implementation: diamond.diamond_agent.tasks.install
+          inputs:
+            diamond_config:
+              default:
+                interval: 1
+        start: diamond.diamond_agent.tasks.start
+        stop: diamond.diamond_agent.tasks.stop
+        uninstall: diamond.diamond_agent.tasks.uninstall
+      cloudify.interfaces.monitoring:
+        start:
+          implementation: diamond.diamond_agent.tasks.add_collectors
+          inputs:
+            collectors_config:
+              default:
+                CPUCollector: {}
+                MemoryCollector: {}
+                LoadAverageCollector: {}
+                DiskUsageCollector:
+                  config:
+                    devices: x?vd[a-z]+[0-9]*$
+                NetworkCollector: {}
+  
   joscor.node.Nodejs.Server:
     # ApplicationServer == SoftwareComponent == Root
     derived_from: cloudify.nodes.ApplicationServer
@@ -57,36 +84,12 @@ relationships:
 node_templates:
   # Container (host)
   host:
-    type: cloudify.nodes.Compute
+    type: joscor.node.Server.Monitored
     properties:
       ip: { get_input: host_ip }
       cloudify_agent:
         user: { get_input: agent_user }
         key: { get_input: agent_ssh_key }
-    interfaces:
-      cloudify.interfaces.monitoring_agent:
-        install:
-          implementation: diamond.diamond_agent.tasks.install
-          inputs:
-            diamond_config:
-              default:
-                interval: 1
-        start: diamond.diamond_agent.tasks.start
-        stop: diamond.diamond_agent.tasks.stop
-        uninstall: diamond.diamond_agent.tasks.uninstall
-      cloudify.interfaces.monitoring:
-        start:
-          implementation: diamond.diamond_agent.tasks.add_collectors
-          inputs:
-            collectors_config:
-              default:
-                CPUCollector: {}
-                MemoryCollector: {}
-                LoadAverageCollector: {}
-                DiskUsageCollector:
-                  config:
-                    devices: x?vd[a-z]+[0-9]*$
-                NetworkCollector: {}
         
   nodejs_server:
     type: joscor.node.Nodejs.Server
