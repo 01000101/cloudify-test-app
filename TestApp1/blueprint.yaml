@@ -28,6 +28,8 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create: scripts/nodejs-install.sh
+    properties:
+      collectors_config: {}
         
   joscor.node.Nodejs.Application:
     # ApplicationModule == cloudify.nodes.Root
@@ -63,12 +65,38 @@ node_templates:
       cloudify_agent:
         user: { get_input: agent_user }
         key: { get_input: agent_ssh_key }
+    interfaces:
+      cloudify.interfaces.monitoring_agent:
+        install:
+          implementation: diamond.diamond_agent.tasks.install
+          inputs:
+            diamond_config:
+              interval: 5
+        start: diamond.diamond_agent.tasks.start
+        stop: diamond.diamond_agent.tasks.stop
+        uninstall: diamond.diamond_agent.tasks.uninstall
         
   nodejs_server:
     type: joscor.node.Nodejs.Server
     relationships:
       - type: cloudify.relationships.contained_in
         target: host
+    properties:
+      collectors_config:
+        CPUCollector: {}
+        DiskUsageCollector: {}
+        MemoryCollector: {}
+        NetworkCollector: {}
+    interfaces:
+      cloudify.interfaces.monitoring:
+        start:
+          implementation: diamond.diamond_agent.tasks.add_collectors
+          inputs:
+            collectors_config: { get_propery: [SELF, collectors_config] }
+        stop:
+          implementation: diamond.diamond_agent.tasks.del_collectors
+          inputs:
+            collectors_config: { get_propery: [SELF, collectors_config] }
   
   nodejs_application:
     type: joscor.node.Nodejs.Application
