@@ -22,7 +22,7 @@ inputs:
 
 # Definitions of node types
 node_types:
-  joscor.code.Server.Monitored:
+  joscor.node.Server.Monitored:
     derived_from: cloudify.nodes.Compute
     interfaces:
       cloudify.interfaces.monitoring_agent:
