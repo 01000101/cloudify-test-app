@@ -37,9 +37,11 @@ node_types:
     properties:
       port:
         type: integer
-      application_path:
-        default: app/
-      startup_script_path:
+      application_uri:
+        default: https://github.com/01000101/cloudify-test-app/archive/master.zip
+      application_root:
+        default: TestApp1
+      application_entry_point:
         default: app/server.js
     interfaces:
       cloudify.interfaces.lifecycle:
