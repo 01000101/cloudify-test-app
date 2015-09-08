@@ -1,0 +1,114 @@
+tosca_definitions_version: cloudify_dsl_1_1
+
+# Import common definitions
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.2/types.yaml
+
+# Accepted inputs
+inputs:
+  host_ip:
+    description: "Private IP of the hosting server"
+    default: "10.67.79.36"
+  app_port:
+    description: "Port for the web application"
+    type: integer
+    default: 8080
+  agent_user:
+    description: "Cloudify deployment username"
+    default: "ubuntu"
+  agent_ssh_key:
+    description: "Cloudify deployment SSH key file path"
+    default: "/root/.ssh/agent_key.pem"
+
+# Definitions of node types
+node_types:
+  joscor.node.Nodejs.Server:
+    # ApplicationServer == SoftwareComponent == Root
+    derived_from: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: scripts/nodejs-install.sh
+    properties:
+      collectors_config: {}
+        
+  joscor.node.Nodejs.Application:
+    # ApplicationModule == cloudify.nodes.Root
+    derived_from: cloudify.nodes.ApplicationModule
+    properties:
+      port:
+        type: integer
+      application_path:
+        default: app/
+      startup_script_path:
+        default: app/server.js
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/app-configure.sh
+        start: scripts/app-start.sh
+        stop: scripts/app-stop.sh
+        
+# Relationship templates
+relationships:
+  joscor.relationships.Nodejs.contained_in:
+    derived_from: cloudify.relationships.contained_in
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: scripts/nodejs-set-root.sh
+
+# Actual server / app deployment definitions
+node_templates:
+  # Container (host)
+  host:
+    type: cloudify.nodes.Compute
+    properties:
+      ip: { get_input: host_ip }
+      cloudify_agent:
+        user: { get_input: agent_user }
+        key: { get_input: agent_ssh_key }
+    interfaces:
+      cloudify.interfaces.monitoring_agent:
+        install:
+          implementation: diamond.diamond_agent.tasks.install
+          inputs:
+            diamond_config:
+              interval: 5
+        start: diamond.diamond_agent.tasks.start
+        stop: diamond.diamond_agent.tasks.stop
+        uninstall: diamond.diamond_agent.tasks.uninstall
+        
+  nodejs_server:
+    type: joscor.node.Nodejs.Server
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host
+    properties:
+      collectors_config:
+        CPUCollector: {}
+        DiskUsageCollector: {}
+        MemoryCollector: {}
+        NetworkCollector: {}
+    interfaces:
+      cloudify.interfaces.monitoring:
+        start:
+          implementation: diamond.diamond_agent.tasks.add_collectors
+          inputs:
+            collectors_config: { get_propery: [SELF, collectors_config] }
+        stop:
+          implementation: diamond.diamond_agent.tasks.del_collectors
+          inputs:
+            collectors_config: { get_propery: [SELF, collectors_config] }
+  
+  nodejs_application:
+    type: joscor.node.Nodejs.Application
+    properties:
+      port: { get_input: app_port }
+    relationships:
+      - type: joscor.relationships.Nodejs.contained_in
+        target: nodejs_server
+
+# Output for the user to know where the new service is located 
+outputs:
+  endpoint:
+    value:
+      ip_address: { get_property: [host, ip] }
+      port: { get_property: [nodejs_application, port] }
