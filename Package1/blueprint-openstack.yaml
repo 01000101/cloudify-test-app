@@ -97,7 +97,7 @@ node_templates:
         type: cloudify.relationships.connected_to
       - target: host_subnet
         type: cloudify.relationships.depends_on
-      - target: host_flatingIP
+      - target: host_floatingIP
         type: cloudify.openstack.server_connected_to_floating_ip
       - target: host_security_group
         type: cloudify.relationships.server_connected_to_security_group
