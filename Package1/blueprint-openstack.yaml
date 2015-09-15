@@ -6,6 +6,9 @@ imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.2.1/plugin.yaml
 # Accepted inputs
 inputs:
+  app_port:
+    description: "Application port"
+    default: 8080
   os_external_network:
     description: "External network (name) in OpenStack"
     default: "Ext-Net"
@@ -40,6 +43,22 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create: scripts/nodejs-install.sh
+        
+  joscor.node.Nodejs.Application:
+    # ApplicationModule == cloudify.nodes.Root
+    derived_from: cloudify.nodes.ApplicationModule
+    properties:
+      port:
+        type: integer
+      application_path:
+        default: app/
+      startup_script_path:
+        default: app/server.js
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/app-configure.sh
+        start: scripts/app-start.sh
+        stop: scripts/app-stop.sh
 
 # Actual server / app deployment definitions
 node_templates:
@@ -81,7 +100,7 @@ node_templates:
       resource_id: { get_input: os_security_group }
       rules:
         - remote_ip_prefix: 0.0.0.0/0
-          port: 8080
+          port: { get_input: app_port }
   
   # Container (host)
   host:
@@ -111,3 +130,11 @@ node_templates:
     relationships:
       - type: cloudify.relationships.contained_in
         target: host
+        
+  nodejs_application:
+    type: joscor.node.Nodejs.Application
+    properties:
+      port: { get_input: app_port }
+    relationships:
+      - type: joscor.relationships.Nodejs.contained_in
+        target: nodejs_server
