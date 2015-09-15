@@ -53,7 +53,11 @@ function wait_for_server() {
     fi
 }
 
-REBOOT_STARTED=$(ctx instance runtime_properties reboot_started) or false
+REBOOT_STARTED=$(ctx instance runtime_properties reboot_started)
+if [ ${REBOOT_STARTED} = None ]; then
+    REBOOT_STARTED=false
+fi
+
 ctx logger info "reboot_started = ${REBOOT_STARTED}"
 if [ $REBOOT_STARTED = true ]; then
     ctx logger info "Reboot completed"
