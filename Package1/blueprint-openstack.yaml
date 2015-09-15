@@ -100,7 +100,7 @@ node_templates:
       - target: host_floatingIP
         type: cloudify.openstack.server_connected_to_floating_ip
       - target: host_security_group
-        type: cloudify.relationships.server_connected_to_security_group
+        type: cloudify.openstack.server_connected_to_security_group
         
         
   nodejs_server:
