@@ -88,7 +88,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          input:
+          inputs:
             args:
               image: { get_input: os_host_image_id }
               flavor: 102
