@@ -34,6 +34,14 @@ inputs:
     description: "Cloudify deployment SSH key file path"
     default: "/root/.ssh/agent_key.pem"
 
+# Relationship templates
+relationships:
+  joscor.relationships.Nodejs.contained_in:
+    derived_from: cloudify.relationships.contained_in
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: scripts/nodejs-set-root.sh
+
 # Definitions of node types
 node_types:
   # Node.js environment template
