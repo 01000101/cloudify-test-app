@@ -3,7 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_1
 # Import common definitions
 imports:
   - http://www.getcloudify.org/spec/cloudify/3.2.1/types.yaml
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.2/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.2.1/plugin.yaml
 # Accepted inputs
 inputs:
   os_external_network:
