@@ -53,14 +53,21 @@ function wait_for_server() {
     fi
 }
 
+ctx logger info "reboot_started = $(ctx instance runtime_properties reboot_started)"
+if [ $(ctx instance runtime_properties reboot_started) = true ]; then
+    ctx logger info "Reboot completed"
+    exit 0
+fi
+
 ctx logger info "Updating the platform..."
 sudo apt-get update
 sudo apt-get upgrade -y
 ctx logger info "Updates applied"
+
 ctx logger info "Rebooting..."
+ctx instance runtime_properties reboot_started true
 sudo shutdown -r now
 ctx logger info "Reboot completed"
-
 
 NODEJS_BINARIES_PATH=$(ctx instance runtime_properties nodejs_binaries_path)
 NODEJS_APP_PATH=$(ctx instance runtime_properties nodejs_application_path)
