@@ -53,6 +53,15 @@ function wait_for_server() {
     fi
 }
 
+ctx logger info "Updating the platform..."
+apt-get update
+apt-get upgrade -y
+ctx logger info "Updates applied"
+ctx logger info "Rebooting..."
+shutdown -r now
+ctx logger info "Reboot completed"
+
+
 NODEJS_BINARIES_PATH=$(ctx instance runtime_properties nodejs_binaries_path)
 NODEJS_APP_PATH=$(ctx instance runtime_properties nodejs_application_path)
 
