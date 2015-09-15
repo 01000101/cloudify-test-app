@@ -1,0 +1,110 @@
+tosca_definitions_version: cloudify_dsl_1_1
+
+# Import common definitions
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.3m5/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.3m5/plugin.yaml
+# Accepted inputs
+inputs:
+  os_external_network:
+    description: "External network (name) in OpenStack"
+    default: "Ext-Net"
+  os_internal_network:
+    description: "Internal network (name) in OpenStack"
+    default: "Joscor-Int-Net"
+  os_security_group:
+    description: "Security Group (name) in OpenStack"
+    default: "Joscor-Sec-01"
+  os_host_name:
+    description: "Name of the host server"
+    default: "Joscor-Server-01"
+  os_host_image_id:
+    description: "Image UUID for the host server"
+    default: "564be9dd-5a06-4a26-ba50-9453f972e483"
+  agent_user:
+    description: "Cloudify deployment username"
+    default: "ubuntu"
+  agent_ssh_key:
+    description: "Cloudify deployment SSH key file path"
+    default: "/root/.ssh/agent_key.pem"
+
+# Definitions of node types
+node_types:
+  # Node.js environment template
+  joscor.node.Nodejs.Server:
+    # ApplicationServer == SoftwareComponent == Root
+    derived_from: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: scripts/nodejs-install.sh
+
+# Actual server / app deployment definitions
+node_templates:
+  # Floating IP for host
+  host_floatingIP:
+    type: cloudify.openstack.nodes.floatingIP
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              floating_network_name: { get_input: os_external_network }
+  
+  # Network for app
+  host_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      resource_id: { get_input: os_internal_network }
+      
+  # Subnet for app
+  host_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      resource_id: { get_input: os_internal_subnet }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              cidr: 172.16.0.0/24
+              ip_version: 4
+    relationships:
+      - target: host_network
+        type: cloudify.relationships.contained_in
+  
+  host_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      resource_id: { get_input: os_security_group }
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          port: 8080
+  
+  # Container (host)
+  host:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      resource_id: { get_input: os_host_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          input:
+            args:
+              image: { get_input: os_host_image_id }
+              flavor: 102
+    relationships:
+      - target: host_network
+        type: cloudify.relationships.connected_to
+      - target: host_subnet
+        type: cloudify.relationships.depends_on
+      - target: host_flatingIP
+        type: cloudify.openstack.server_connected_to_floating_ip
+      - target: host_security_group
+        type: cloudify.relationships.server_connected_to_security_group
+        
+        
+  nodejs_server:
+    type: joscor.node.Nodejs.Server
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host

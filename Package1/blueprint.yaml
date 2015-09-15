@@ -2,8 +2,8 @@ tosca_definitions_version: cloudify_dsl_1_1
 
 # Import common definitions
 imports:
-  - http://www.getcloudify.org/spec/cloudify/3.2/types.yaml
-  - http://www.getcloudify.org/spec/diamond-plugin/1.2/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/3.3m5/types.yaml
+  - http://www.getcloudify.org/spec/diamond-plugin/1.3m5/plugin.yaml
 # Accepted inputs
 inputs:
   host_ip:
@@ -22,33 +22,6 @@ inputs:
 
 # Definitions of node types
 node_types:
-  joscor.node.Server.Monitored:
-    derived_from: cloudify.nodes.Compute
-    interfaces:
-      cloudify.interfaces.monitoring_agent:
-        install:
-          implementation: diamond.diamond_agent.tasks.install
-          inputs:
-            diamond_config:
-              default:
-                interval: 1
-        start: diamond.diamond_agent.tasks.start
-        stop: diamond.diamond_agent.tasks.stop
-        uninstall: diamond.diamond_agent.tasks.uninstall
-      cloudify.interfaces.monitoring:
-        start:
-          implementation: diamond.diamond_agent.tasks.add_collectors
-          inputs:
-            collectors_config:
-              default:
-                CPUCollector: {}
-                MemoryCollector: {}
-                LoadAverageCollector: {}
-                DiskUsageCollector:
-                  config:
-                    devices: x?vd[a-z]+[0-9]*$
-                NetworkCollector: {}
-  
   joscor.node.Nodejs.Server:
     # ApplicationServer == SoftwareComponent == Root
     derived_from: cloudify.nodes.ApplicationServer
@@ -84,12 +57,35 @@ relationships:
 node_templates:
   # Container (host)
   host:
-    type: joscor.node.Server.Monitored
+    type: cloudify.nodes.Compute
     properties:
       ip: { get_input: host_ip }
       cloudify_agent:
         user: { get_input: agent_user }
         key: { get_input: agent_ssh_key }
+    interfaces:
+      cloudify.interfaces.monitoring_agent:
+        install:
+          implementation: diamond.diamond_agent.tasks.install
+          inputs:
+            diamond_config:
+              default:
+                interval: 1
+        start: diamond.diamond_agent.tasks.start
+        stop: diamond.diamond_agent.tasks.stop
+        uninstall: diamond.diamond_agent.tasks.uninstall
+      cloudify.interfaces.monitoring:
+        start:
+          implementation: diamond.diamond_agent.tasks.add_collectors
+          inputs:
+            collectors_config:
+              CPUCollector: {}
+              MemoryCollector: {}
+              LoadAverageCollector: {}
+              DiskUsageCollector:
+                config:
+                  devices: x?vd[a-z]+[0-9]*$
+              NetworkCollector: {}
         
   nodejs_server:
     type: joscor.node.Nodejs.Server
