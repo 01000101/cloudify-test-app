@@ -42,7 +42,7 @@ node_types:
 node_templates:
   # Floating IP for host
   host_floatingIP:
-    type: cloudify.openstack.nodes.floatingIP
+    type: cloudify.openstack.nodes.FloatingIP
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
