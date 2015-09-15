@@ -54,11 +54,11 @@ function wait_for_server() {
 }
 
 ctx logger info "Updating the platform..."
-apt-get update
-apt-get upgrade -y
+sudo apt-get update
+sudo apt-get upgrade -y
 ctx logger info "Updates applied"
 ctx logger info "Rebooting..."
-shutdown -r now
+sudo shutdown -r now
 ctx logger info "Reboot completed"
 
 
