@@ -12,6 +12,9 @@ inputs:
   os_internal_network:
     description: "Internal network (name) in OpenStack"
     default: "Joscor-Int-Net"
+  os_internal_subnet:
+    description: "Internal network (name) in OpenStack"
+    default: "Joscor-Int-Subnet"
   os_security_group:
     description: "Security Group (name) in OpenStack"
     default: "Joscor-Sec-01"
