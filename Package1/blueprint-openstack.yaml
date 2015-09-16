@@ -36,11 +36,7 @@ node_types:
     derived_from: cloudify.openstack.nodes.Server
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              image: { get_input: os_host_image_id }
-              flavor: 102
+        configure: {}
 
 # Actual server / app deployment definitions
 node_templates:
@@ -84,7 +80,11 @@ node_templates:
       resource_id: "Oracle-Host-01"
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure: {}
+        create:
+          inputs:
+            args:
+              image: { get_input: os_host_image_id }
+              flavor: 102
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
@@ -97,6 +97,13 @@ node_templates:
     type: joscor.openstack.nodes.Server
     properties:
       resource_id: "Oracle-Host-02"
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              image: { get_input: os_host_image_id }
+              flavor: 102
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
