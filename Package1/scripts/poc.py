@@ -3,7 +3,7 @@ from cloudify import ctx
 ctx.logger.info('Initializing plugin script: scripts/PoC.py')
     
 for rel in ctx.instance.relationships:
-    target = rel.target.runtime_properties
+    target = rel.target.instance.runtime_properties
     ctx.logger.info('relationship:')
     ctx.logger.info('  ip: ' . format(target['ip']))
     ctx.logger.info('  all: ' . format(target))
