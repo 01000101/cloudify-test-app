@@ -4,11 +4,9 @@ tosca_definitions_version: cloudify_dsl_1_1
 imports:
   - http://www.getcloudify.org/spec/cloudify/3.2.1/types.yaml
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.2.1/plugin.yaml
+  
 # Accepted inputs
 inputs:
-  app_port:
-    description: "Application port"
-    default: 8080
   os_external_network:
     description: "External network (name) in OpenStack"
     default: "Ext-Net"
@@ -21,9 +19,6 @@ inputs:
   os_security_group:
     description: "Security Group (name) in OpenStack"
     default: "Joscor-Sec-01"
-  os_host_name:
-    description: "Name of the host server"
-    default: "Joscor-Server-01"
   os_host_image_id:
     description: "Image UUID for the host server"
     default: "564be9dd-5a06-4a26-ba50-9453f972e483"
@@ -36,50 +31,15 @@ inputs:
 
 # Relationship templates
 relationships:
-  joscor.relationships.Nodejs.contained_in:
-    derived_from: cloudify.relationships.contained_in
-    target_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure: scripts/nodejs-set-root.sh
 
 # Definitions of node types
 node_types:
-  # Node.js environment template
-  joscor.node.Nodejs.Server:
-    # ApplicationServer == SoftwareComponent == Root
-    derived_from: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create: scripts/nodejs-install.sh
-        
-  joscor.node.Nodejs.Application:
-    # ApplicationModule == cloudify.nodes.Root
-    derived_from: cloudify.nodes.ApplicationModule
-    properties:
-      port:
-        type: integer
-      application_path:
-        default: app/
-      startup_script_path:
-        default: app/server.js
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/app-configure.sh
-        start: scripts/app-start.sh
-        stop: scripts/app-stop.sh
 
 # Actual server / app deployment definitions
 node_templates:
-  # Floating IP for host
-  host_floatingIP:
-    type: cloudify.openstack.nodes.FloatingIP
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              floating_network_name: { get_input: os_external_network }
-  
+  #####################################
+  ## OpenStack Networking Components ##
+  #####################################
   # Network for app
   host_network:
     type: cloudify.openstack.nodes.Network
@@ -110,11 +70,14 @@ node_templates:
         - remote_ip_prefix: 0.0.0.0/0
           port: { get_input: app_port }
   
-  # Container (host)
-  host:
+  #####################
+  ## OpenStack Hosts ##
+  #####################
+  # Container (host_01)
+  host_01:
     type: cloudify.openstack.nodes.Server
     properties:
-      resource_id: { get_input: os_host_name }
+      resource_id: "Oracle-Host-01"
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -127,22 +90,73 @@ node_templates:
         type: cloudify.relationships.connected_to
       - target: host_subnet
         type: cloudify.relationships.depends_on
-      - target: host_floatingIP
-        type: cloudify.openstack.server_connected_to_floating_ip
       - target: host_security_group
         type: cloudify.openstack.server_connected_to_security_group
         
+  host_02:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      resource_id: "Oracle-Host-02"
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              image: { get_input: os_host_image_id }
+              flavor: 102
+    relationships:
+      - target: host_network
+        type: cloudify.relationships.connected_to
+      - target: host_subnet
+        type: cloudify.relationships.depends_on
+      - target: host_security_group
+        type: cloudify.openstack.server_connected_to_security_group
         
-  nodejs_server:
-    type: joscor.node.Nodejs.Server
+  ###################################
+  ## OpenStack Application Servers ##
+  ###################################
+  oracle_rac_01:
+    type: cloudify.nodes.ApplicationServer
     relationships:
       - type: cloudify.relationships.contained_in
-        target: host
-        
-  nodejs_application:
-    type: joscor.node.Nodejs.Application
-    properties:
-      port: { get_input: app_port }
+        target: host_01
+  
+  oracle_rac_02:
+    type: cloudify.nodes.ApplicationServer
     relationships:
-      - type: joscor.relationships.Nodejs.contained_in
-        target: nodejs_server
+      - type: cloudify.relationships.contained_in
+        target: host_02
+        
+  ############################
+  ## OpenStack Applications ##
+  ############################
+  oracle_rac_app_01:
+    # ApplicationModule == cloudify.nodes.Root
+    type: cloudify.nodes.ApplicationModule
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: oracle_rac_01
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: scripts/server-install.sh
+
+  oracle_rac_app_02:
+    # ApplicationModule == cloudify.nodes.Root
+    type: cloudify.nodes.ApplicationModule
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: oracle_rac_02
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: scripts/server-install.sh
+        
+  fake_dependency:
+    type: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/poc.sh
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: oracle_rac_app_01
+      - type: cloudify.relationships.depends_on
+        target: oracle_rac_app_02
