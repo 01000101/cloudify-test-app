@@ -30,6 +30,14 @@ inputs:
     description: "Cloudify deployment SSH key file path"
     default: "/root/.ssh/agent_key.pem"
 
+# Node type definitions
+node_types:
+  joscor.openstack.nodes.Server:
+    derived_from: cloudify.openstack.nodes.Server
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/server-install.sh
+
 # Actual server / app deployment definitions
 node_templates:
   #####################################
@@ -67,7 +75,7 @@ node_templates:
   #####################
   # Container (host_01)
   host_01:
-    type: cloudify.openstack.nodes.Server
+    type: joscor.openstack.nodes.Server
     properties:
       resource_id: "Oracle-Host-01"
     interfaces:
@@ -77,7 +85,6 @@ node_templates:
             args:
               image: { get_input: os_host_image_id }
               flavor: 102
-        configure: scripts/server-install.sh
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
@@ -87,7 +94,7 @@ node_templates:
         type: cloudify.openstack.server_connected_to_security_group
         
   host_02:
-    type: cloudify.openstack.nodes.Server
+    type: joscor.openstack.nodes.Server
     properties:
       resource_id: "Oracle-Host-02"
     interfaces:
@@ -97,7 +104,6 @@ node_templates:
             args:
               image: { get_input: os_host_image_id }
               flavor: 102
-        configure: scripts/server-install.sh
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
