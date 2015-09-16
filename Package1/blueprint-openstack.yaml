@@ -31,14 +31,7 @@ inputs:
 
 # Node type definitions
 node_types:
-  joscor.openstack.nodes.Server:
-    derived_from: cloudify.openstack.nodes.Server
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              default: {}
+
 
 # Actual server / app deployment definitions
 node_templates:
@@ -77,9 +70,16 @@ node_templates:
   #####################
   # Container (host_01)
   host_01:
-    type: joscor.openstack.nodes.Server
+    type: cloudify.openstack.nodes.Server
     properties:
       resource_id: "Oracle-Host-01"
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              image: { get_input: os_host_image_id }
+              flavor: 102
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
@@ -89,9 +89,16 @@ node_templates:
         type: cloudify.openstack.server_connected_to_security_group
         
   host_02:
-    type: joscor.openstack.nodes.Server
+    type: cloudify.openstack.nodes.Server
     properties:
       resource_id: "Oracle-Host-02"
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              image: { get_input: os_host_image_id }
+              flavor: 102
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
