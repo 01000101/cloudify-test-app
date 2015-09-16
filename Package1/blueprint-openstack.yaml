@@ -77,7 +77,7 @@ node_templates:
             args:
               image: { get_input: os_host_image_id }
               flavor: 102
-        start: scripts/server-install.sh
+        configure: scripts/server-install.sh
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
@@ -97,8 +97,7 @@ node_templates:
             args:
               image: { get_input: os_host_image_id }
               flavor: 102
-              interfaces:
-        start: scripts/server-install.sh
+        configure: scripts/server-install.sh
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
