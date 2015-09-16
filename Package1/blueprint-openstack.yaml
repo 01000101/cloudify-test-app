@@ -38,10 +38,7 @@ node_types:
         create:
           inputs:
             args:
-              image:
-                default: { get_input: os_host_image_id }
-              flavor:
-                defualt: 102
+              default: {}
 
 # Actual server / app deployment definitions
 node_templates:
