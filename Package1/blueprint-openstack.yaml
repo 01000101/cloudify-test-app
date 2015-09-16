@@ -36,16 +36,18 @@ node_types:
     derived_from: cloudify.openstack.nodes.Server
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
-          implementation: script.script_runner.tasks.run
-          inputs:
-            script_path:
-              default: scripts/server-install.sh
         create:
           inputs:
             args:
               image: { get_input: os_host_image_id }
               flavor: 102
+    relationships:
+      - target: host_network
+        type: cloudify.relationships.connected_to
+      - target: host_subnet
+        type: cloudify.relationships.depends_on
+      - target: host_security_group
+        type: cloudify.openstack.server_connected_to_security_group
 
 # Actual server / app deployment definitions
 node_templates:
@@ -87,25 +89,14 @@ node_templates:
     type: joscor.openstack.nodes.Server
     properties:
       resource_id: "Oracle-Host-01"
-    relationships:
-      - target: host_network
-        type: cloudify.relationships.connected_to
-      - target: host_subnet
-        type: cloudify.relationships.depends_on
-      - target: host_security_group
-        type: cloudify.openstack.server_connected_to_security_group
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/server-install.sh
         
   host_02:
     type: joscor.openstack.nodes.Server
     properties:
       resource_id: "Oracle-Host-02"
-    relationships:
-      - target: host_network
-        type: cloudify.relationships.connected_to
-      - target: host_subnet
-        type: cloudify.relationships.depends_on
-      - target: host_security_group
-        type: cloudify.openstack.server_connected_to_security_group
         
   ###################################
   ## OpenStack Application Servers ##
