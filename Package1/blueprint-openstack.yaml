@@ -77,6 +77,7 @@ node_templates:
             args:
               image: { get_input: os_host_image_id }
               flavor: 102
+        configure: scripts/server-install.sh
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
@@ -96,6 +97,8 @@ node_templates:
             args:
               image: { get_input: os_host_image_id }
               flavor: 102
+              interfaces:
+        configure: scripts/server-install.sh
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
@@ -128,9 +131,6 @@ node_templates:
     relationships:
       - type: cloudify.relationships.contained_in
         target: oracle_rac_01
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create: scripts/server-install.sh
 
   oracle_rac_app_02:
     # ApplicationModule == cloudify.nodes.Root
@@ -138,9 +138,6 @@ node_templates:
     relationships:
       - type: cloudify.relationships.contained_in
         target: oracle_rac_02
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create: scripts/server-install.sh
         
   fake_dependency:
     type: cloudify.nodes.Root
