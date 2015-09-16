@@ -1,22 +1,19 @@
 from cloudify import ctx
 
 ctx.logger.info('Initializing plugin script: scripts/PoC.py')
-    
+node_list = []
+
 for rel in ctx.instance.relationships:
-    inst = rel.target.instance
-    node = rel.target.node
-    ctx.logger.info('Relationship ({0}):' . format(rel.type))
-    ctx.logger.info(' Node:')
-    ctx.logger.info('  id: {0}' . format(node.id))
-    ctx.logger.info('  name: {0}' . format(node.name))
-    ctx.logger.info('  properties: {0}' . format(node.properties))
-    ctx.logger.info('  all: {0}' . format(node))
-    ctx.logger.info(' Instance:')
-    ctx.logger.info('  id: {0}' . format(inst.id))
-    ctx.logger.info('  runtime: {0}' . format(inst.runtime_properties))
-    ctx.logger.info('  host_ip: {0}' . format(inst.host_ip))
-    ctx.logger.info('  relationships: {0}' . format(inst.relationships))
-    ctx.logger.info('  all: {0}' . format(inst))
+    if rel.type == 'cloudify.relationships.depends_on':
+        node_list.append(rel.target)
+
+ctx.logger.info('{0} nodes discovered' . format(len(node_list) + 1))
+if len(node_list) != 2:
+    raise NonRecoverableError("Node requires exactly 2 dependent nodes")
+    
+ctx.logger.info('Preparing to query nodes for Oracle RAC keys')
+ctx.logger.info(' Node #1: {0}' . format(node_list[0].instance.host_ip))
+ctx.logger.info(' Node #2: {0}' . format(node_list[1].instance.host_ip))
    
 ctx.logger.info('Node properties: {0}'
     .format(ctx.node.properties))
