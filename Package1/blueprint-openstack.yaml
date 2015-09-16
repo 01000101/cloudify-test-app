@@ -29,12 +29,6 @@ inputs:
     description: "Cloudify deployment SSH key file path"
     default: "/root/.ssh/agent_key.pem"
 
-# Relationship templates
-relationships:
-
-# Definitions of node types
-node_types:
-
 # Actual server / app deployment definitions
 node_templates:
   #####################################
