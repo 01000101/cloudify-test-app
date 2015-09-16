@@ -1,6 +1,4 @@
-#!/bin/bash
-
-set -e
+#! /bin/bash -e
 
 mkdir -p /tmp/keys
 ctx logger info "Generating Oracle RAC SSH keys..."
