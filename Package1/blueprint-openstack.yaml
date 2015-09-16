@@ -150,6 +150,8 @@ node_templates:
       cloudify.interfaces.lifecycle:
         configure: scripts/poc.sh
     relationships:
+      - type: cloudify.relationships.contained_in
+        target: oracle_rac_01
       - type: cloudify.relationships.depends_on
         target: oracle_rac_app_01
       - type: cloudify.relationships.depends_on
