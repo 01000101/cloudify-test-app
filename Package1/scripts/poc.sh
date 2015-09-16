@@ -1,6 +1,4 @@
-#!/bin/bash
-
-set -e
+#! /bin/bash -e
 
 ctx logger info "Printing environment variables..."
 ctx logger info "$(env)"
@@ -10,10 +8,13 @@ ctx logger info "Printing instance properties..."
 ctx logger info "$(ctx instance runtime_properties)"
 ctx logger info "Printing instance relationships..."
 ctx logger info "$(ctx instance relationships)"
+ctx logger info "Printing instance..."
+ctx logger info "$(ctx instance)"
 ctx logger info "Exiting script"
 
-for rel in $(ctx instance relationships):
+for rel in $(ctx instance relationships); do
     ctx logger info "Printing relationship properties..."
     ctx logger info "${rel.target.runtime_properties}"
     ctx logger info "Printing relationship IP..."
     ctx logger info "${rel.target.runtime_properties['ip']}"
+done
