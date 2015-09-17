@@ -1,6 +1,6 @@
 from cloudify import ctx
 
-ctx.logger.info('Initializing plugin script: scripts/PoC.py')
+ctx.logger.info('Initializing plugin script: scripts/poc.py')
 node_list = []
 
 for rel in ctx.instance.relationships:
