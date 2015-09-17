@@ -1,7 +1,10 @@
 from cloudify import ctx
 
-ctx.logger.info('Initializing plugin script: scripts/poc.py')
+PRIV_KEY_FILE = '/tmp/temp.key'
+PRIV_KEY_DATA = ''
 node_list = []
+
+ctx.logger.info('Initializing plugin script: scripts/poc.py')
 
 for rel in ctx.instance.relationships:
     if rel.type == 'cloudify.relationships.depends_on':
@@ -23,5 +26,14 @@ ctx.logger.info('Runtime properties: {0}'
 
 ctx.logger.info('Relationships: {0}'
     .format(ctx.instance.relationships))
+    
+ctx.logger.info('Copying temporary SSH key to filesystem')
+ctx.download_resource(ctx.node.properties['tmp_priv_key_path'], PRIV_KEY_FILE)
+
+ctx.logger.info('Retrieving temporary SSH key into memory')
+with open(PRIV_KEY_FILE, 'r') as f
+    PRIV_KEY_DATA = f.read()
+    
+ctx.logger.info('Temporary SSH key: {0}' . format(PRIV_KEY_DATA))
     
 ctx.logger.info('Plugin script completed')
