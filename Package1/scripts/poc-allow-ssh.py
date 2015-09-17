@@ -33,9 +33,9 @@ ctx.logger.info('Creating path to store Oracle RAC keys: {0}' . format(os.path.d
 if not os.path.exists(os.path.dirname(ORACLE_KEY_PATH)):
     os.makedirs(os.path.dirname(ORACLE_KEY_PATH))
 
-ctx.logger.info(' stdout: {0}' . format(stdout))
-ctx.logger.info(' stderr: {0}' . format(stderr))
-
+if not os.path.exists(os.path.dirname(ORACLE_KEY_PATH)):
+    ctx.logger.info('Creating path failed')
+    
 ctx.logger.info('Generating Oracle RAC keys: {0}' . format(ORACLE_KEY_PATH))
 cmd = '/usr/bin/ssh-keygen -t rsa -b 2048 -N "" -f ' + ORACLE_KEY_PATH
 ctx.logger.info('Executing {0}' . format(cmd))
