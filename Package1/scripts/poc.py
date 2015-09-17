@@ -72,18 +72,18 @@ if subprocess.call(cmd, shell=True) != 0:
 # Delete the temporary SSH public key from each node
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N1_IP, SSH_AUTH_FILE))
 cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sed -i "$ d" ' + SSH_AUTH_FILE
-p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-output, err = p.communicate()
-ctx.logger.info('output: {0}' . format(output))
-ctx.logger.info('err: {0}' . format(err))
-
-ctx.logger.info('Restarting the SSH service on {0}' . format(N1_IP))
-subprocess.call('ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sudo service ssh restart', shell=True)
+if subprocess.call(cmd, shell=True) != 0:
+    raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N1_IP))
 
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N2_IP, SSH_AUTH_FILE))
 cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + ' sed -i "$ d" ' + SSH_AUTH_FILE
 if subprocess.call(cmd, shell=True) != 0:
     raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N2_IP))
+
+# Restart the SSH service on each node to apply the SSH key changes
+ctx.logger.info('Restarting the SSH service on {0}' . format(N1_IP))
+subprocess.call('ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sudo service ssh restart', shell=True)
+
 ctx.logger.info('Restarting the SSH service on {0}' . format(N2_IP))
 subprocess.call('ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + ' sudo service ssh restart', shell=True)
 
