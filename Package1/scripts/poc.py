@@ -32,7 +32,7 @@ with open(PRIV_KEY_FILE, 'r') as f:
     
 # Retrieve Oracle RAC public keys from each of the nodes
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY))
-cmd = '/usr/bin/scp -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE1_ORACLE_KEY
+cmd = '/usr/bin/scp -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE1_ORACLE_KEY
 ctx.logger.info(' Executing: {0}' . format(cmd))
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 output, err = p.communicate()
