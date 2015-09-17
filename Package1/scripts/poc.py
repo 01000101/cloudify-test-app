@@ -27,12 +27,14 @@ ctx.logger.info(' Node #2: {0}' . format(node_list[1].instance.host_ip))
 # Retrieve the temporary SSH private key from the blueprint
 ctx.logger.info('Copying temporary SSH key to filesystem')
 ctx.download_resource(ctx.node.properties['tmp_priv_key_path'], PRIV_KEY_FILE)
-
+with open(PRIV_KEY_FILE, 'r') as f:
+    ctx.logger.info('{0}: {1}' . format(PRIV_KEY_FILE, f.read()))
+    
 # Retrieve Oracle RAC public keys from each of the nodes
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY))
 cmd = '/usr/bin/scp -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE1_ORACLE_KEY
 ctx.logger.info(' Executing: {0}' . format(cmd))
-p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 output, err = p.communicate()
 ctx.logger.info('output: {0}' . format(output))
 ctx.logger.info('err: {0}' . format(err))
