@@ -31,7 +31,7 @@ ctx.logger.info('Copying temporary SSH key to filesystem')
 ctx.download_resource(ctx.node.properties['tmp_priv_key_path'], PRIV_KEY_FILE)
 
 ctx.logger.info('Retrieving temporary SSH key into memory')
-with open(PRIV_KEY_FILE, 'r') as f
+with open(PRIV_KEY_FILE, 'r') as f:
     PRIV_KEY_DATA = f.read()
     
 ctx.logger.info('Temporary SSH key: {0}' . format(PRIV_KEY_DATA))
