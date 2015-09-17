@@ -41,9 +41,9 @@ with open(PRIV_KEY_FILE, 'r') as f:
     
 ctx.logger.info('Temporary SSH key: {0}' . format(PRIV_KEY_DATA))
 
-ctx.logger.info('Copying Oracle RAC public key from Node #1 to {0}' . format(NODE1_ORACLE_KEY))
-subprocess.call(['scp', '-i', PRIV_KEY_FILE, 'ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY])
-ctx.logger.info('Copying Oracle RAC public key from Node #2 to {0}' . format(NODE2_ORACLE_KEY))
+ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY))
+subprocess.check_output(['scp', '-i', PRIV_KEY_FILE, 'ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY], stderr=subprocess.STDOUT)
+ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE2_ORACLE_KEY))
 subprocess.call(['scp', '-i', PRIV_KEY_FILE, 'ubuntu@' + node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE2_ORACLE_KEY])
 
 ctx.logger.info('Reading Node #1 Oracle key')
