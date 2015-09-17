@@ -3,7 +3,6 @@ from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 
 PRIV_KEY_FILE = '/tmp/temp.key'
-PRIV_KEY_DATA = ''
 ORACLE_KEY_PATH = ctx.node.properties['oracle_key_path'] + '.pub'
 NODE1_ORACLE_KEY = '/tmp/node1.rac.key.pub'
 NODE2_ORACLE_KEY = '/tmp/node2.rac.key.pub'
@@ -29,16 +28,16 @@ ctx.logger.info(' Node #2: {0}' . format(node_list[1].instance.host_ip))
 ctx.logger.info('Copying temporary SSH key to filesystem')
 ctx.download_resource(ctx.node.properties['tmp_priv_key_path'], PRIV_KEY_FILE)
 
-ctx.logger.info('Retrieving temporary SSH key into memory')
-with open(PRIV_KEY_FILE, 'r') as f:
-    PRIV_KEY_DATA = f.read()
-
 # Retrieve Oracle RAC public keys from each of the nodes
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY))
-if subprocess.call('scp -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE1_ORACLE_KEY, shell=True) != 0:
+cmd = '/usr/bin/scp -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE1_ORACLE_KEY
+ctx.logger.info(' Executing: {0}' . format(cmd))
+if subprocess.call(cmd, shell=True) != 0:
     raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH))
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE2_ORACLE_KEY))
-if subprocess.call('scp -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE2_ORACLE_KEY, shell=True) != 0:
+cmd = '/usr/bin/scp -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE2_ORACLE_KEY
+ctx.logger.info(' Executing: {0}' . format(cmd))
+if subprocess.call(cmd, shell=True) != 0:
     raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH))
 
 # Output the retrieved public keys

@@ -179,7 +179,7 @@ node_templates:
         configure: scripts/poc.py
     relationships:
       - type: cloudify.relationships.contained_in
-        target: oracle_rac_01
+        target: oracle_rac_02
       - type: cloudify.relationships.depends_on
         target: oracle_rac_app_01
       - type: cloudify.relationships.depends_on
