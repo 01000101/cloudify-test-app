@@ -72,8 +72,10 @@ if subprocess.call(cmd, shell=True) != 0:
 # Delete the temporary SSH public key from each node
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N1_IP, SSH_AUTH_FILE))
 cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sed -i \'$d\' ' + SSH_AUTH_FILE
-if subprocess.call(cmd, shell=True) != 0:
-    raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N1_IP))
+p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+output, err = p.communicate()
+ctx.logger.info('output: {0}' . format(output))
+ctx.logger.info('err: {0}' . format(err))
 
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N2_IP, SSH_AUTH_FILE))
 cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + ' sed -i \'$d\' ' + SSH_AUTH_FILE
