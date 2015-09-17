@@ -1,4 +1,5 @@
 import os
+import subprocess
 from cloudify import ctx
 
 PUB_KEY_FILE = '/tmp/temp.key.pub'

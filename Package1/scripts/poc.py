@@ -1,3 +1,4 @@
+import subprocess
 from cloudify import ctx
 
 PRIV_KEY_FILE = '/tmp/temp.key'
