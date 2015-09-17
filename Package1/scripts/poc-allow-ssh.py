@@ -1,6 +1,7 @@
 import os
 import subprocess
 from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
 
 PUB_KEY_FILE = '/tmp/temp.key.pub'
 PUB_KEY_DATA = ''
@@ -29,12 +30,20 @@ with open(SSH_AUTH_FILE, 'r') as f:
 
 # Generate Oracle RAC keys
 ctx.logger.info('Creating path to store Oracle RAC keys: {0}' . format(os.path.dirname(ORACLE_KEY_PATH)))
-subprocess.call(['mkdir', '-p', os.path.dirname(ORACLE_KEY_PATH)])
+if subprocess.call(['mkdir', '-p', os.path.dirname(ORACLE_KEY_PATH)]) != 0:
+    raise NonRecoverableError("Error creating path to store Oracle RAC keys")
+
 ctx.logger.info('Generating Oracle RAC keys: {0}' . format(ORACLE_KEY_PATH))
-subprocess.call(['ssh-keygen', '-t', 'rsa', '-b', '2048', '-N', '""', '-f', ORACLE_KEY_PATH])
+if subprocess.call(['ssh-keygen', '-t', 'rsa', '-b', '2048', '-N', '""', '-f', ORACLE_KEY_PATH]) != 0:
+    raise NonRecoverableError("Error generating Oracle RAC keys")
+
+ctx.logger.info('Reading generated Oracle RAC public key')
+with open(ORACLE_KEY_PATH + '.pub', 'r') as f:
+    ctx.logger.info('{0}: {1}' . format(ORACLE_KEY_PATH + '.pub', f.read()))
 
 # Enable LAST_NODE to access this system via SSH
 ctx.logger.info('Restarting the SSH service')
-subprocess.call(['sudo', 'ssh', 'restart'])
+if subprocess.call(['sudo', 'service', 'ssh', 'restart']) != 0:
+    raise NonRecoverableError("Error restarting the SSH service")
 
 ctx.logger.info('Plugin script completed')

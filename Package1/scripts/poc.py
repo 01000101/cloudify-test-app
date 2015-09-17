@@ -1,9 +1,10 @@
 import subprocess
 from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
 
 PRIV_KEY_FILE = '/tmp/temp.key'
 PRIV_KEY_DATA = ''
-ORACLE_KEY_PATH = ctx.node.properties['oracle_key_path']
+ORACLE_KEY_PATH = ctx.node.properties['oracle_key_path'] + '.pub'
 NODE1_ORACLE_KEY = '/tmp/node1.rac.key.pub'
 NODE2_ORACLE_KEY = '/tmp/node2.rac.key.pub'
 node_list = []
@@ -42,7 +43,7 @@ with open(PRIV_KEY_FILE, 'r') as f:
 ctx.logger.info('Temporary SSH key: {0}' . format(PRIV_KEY_DATA))
 
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY))
-subprocess.check_output(['scp', '-i', PRIV_KEY_FILE, 'ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY], stderr=subprocess.STDOUT)
+subprocess.check_output(['scp', '-i', PRIV_KEY_FILE, 'ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY], stderr=subprocess.STDOUT, shell=True)
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE2_ORACLE_KEY))
 subprocess.call(['scp', '-i', PRIV_KEY_FILE, 'ubuntu@' + node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE2_ORACLE_KEY])
 
