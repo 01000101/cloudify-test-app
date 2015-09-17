@@ -34,8 +34,9 @@ if subprocess.call(['mkdir', '-p', os.path.dirname(ORACLE_KEY_PATH)]) != 0:
     raise NonRecoverableError("Error creating path to store Oracle RAC keys")
 
 ctx.logger.info('Generating Oracle RAC keys: {0}' . format(ORACLE_KEY_PATH))
-if subprocess.call(['/usr/bin/ssh-keygen', '-t', 'rsa', '-b', '2048', '-N', '""', '-f', ORACLE_KEY_PATH], stderr=subprocess.STDOUT) != 0:
-    raise NonRecoverableError("Error generating Oracle RAC keys")
+callout = subprocess.call(['/usr/bin/ssh-keygen', '-t', 'rsa', '-b', '2048', '-N', '""', '-f', ORACLE_KEY_PATH], stderr=subprocess.STDOUT)
+if callout != 0:
+    raise NonRecoverableError("Error generating Oracle RAC keys: {0}" . format(callout))
 
 ctx.logger.info('Reading generated Oracle RAC public key')
 with open(ORACLE_KEY_PATH + '.pub', 'r') as f:
