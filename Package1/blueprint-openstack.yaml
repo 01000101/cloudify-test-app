@@ -22,12 +22,15 @@ inputs:
   os_host_image_id:
     description: "Image UUID for the host server"
     default: "564be9dd-5a06-4a26-ba50-9453f972e483"
-  oracle_tmp_priv_key_path:
-    description: "Path to the temporary private key to SSH between Oracle RAC servers"
+  ssh_tmp_priv_key_path:
+    description: "Relative path to the temporary private key to SSH between Oracle RAC servers"
     default: "keys/temp.key"
-  oracle_tmp_pub_key_path:
-    description: "Path to the temporary public key to allow SSH into Oracle RAC servers"
+  ssh_tmp_pub_key_path:
+    description: "Relative path to the temporary public key to allow SSH into Oracle RAC servers"
     default: "keys/temp.key.pub"
+  oracle_key_path:
+    description: "Absolute path to where the Oracle RAC keys will be generated / retrieved (creates file + file.pub)"
+    default: "/tmp/oracle/joscor.key"
   agent_user:
     description: "Cloudify deployment username"
     default: "ubuntu"
@@ -40,13 +43,17 @@ node_types:
     derived_from: cloudify.nodes.Root
     properties:
       tmp_priv_key_path:
-        default: { get_input: oracle_tmp_priv_key_path }
+        default: { get_input: ssh_tmp_priv_key_path }
+      oracle_key_path:
+        default: { get_input: oracle_key_path }
         
   joscor.nodes.OracleModule:
     derived_from: cloudify.nodes.ApplicationModule
     properties:
       tmp_pub_key_path:
-        default: { get_input: oracle_tmp_pub_key_path }
+        default: { get_input: ssh_tmp_pub_key_path }
+      oracle_key_path:
+        default: { get_input: oracle_key_path }
         
 # Actual server / app deployment definitions
 node_templates:
