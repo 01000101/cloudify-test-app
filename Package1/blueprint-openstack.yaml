@@ -22,6 +22,12 @@ inputs:
   os_host_image_id:
     description: "Image UUID for the host server"
     default: "564be9dd-5a06-4a26-ba50-9453f972e483"
+  oracle_tmp_priv_key_path:
+    description: "Path to the temporary private key to SSH between Oracle RAC servers"
+    default: "keys/temp.key"
+  oracle_tmp_pub_key_path:
+    description: "Path to the temporary public key to allow SSH into Oracle RAC servers"
+    default: "keys/temp.key.pub"
   agent_user:
     description: "Cloudify deployment username"
     default: "ubuntu"
@@ -124,6 +130,11 @@ node_templates:
   oracle_rac_app_01:
     # ApplicationModule == cloudify.nodes.Root
     type: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/poc-allow-ssh.py
+    properties:
+      tmp_pub_key_path: { get_input: oracle_tmp_pub_key_path }
     relationships:
       - type: cloudify.relationships.contained_in
         target: oracle_rac_01
@@ -131,6 +142,11 @@ node_templates:
   oracle_rac_app_02:
     # ApplicationModule == cloudify.nodes.Root
     type: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/poc-allow-ssh.py
+    properties:
+      tmp_pub_key_path: { get_input: oracle_tmp_pub_key_path }
     relationships:
       - type: cloudify.relationships.contained_in
         target: oracle_rac_02
@@ -140,6 +156,8 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure: scripts/poc.py
+    properties:
+      tmp_priv_key_path: { get_input: oracle_tmp_priv_key_path }
     relationships:
       - type: cloudify.relationships.contained_in
         target: oracle_rac_01
