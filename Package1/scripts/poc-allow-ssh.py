@@ -36,6 +36,7 @@ if subprocess.call(['mkdir', '-p', os.path.dirname(ORACLE_KEY_PATH)]) != 0:
 ctx.logger.info('Generating Oracle RAC keys: {0}' . format(ORACLE_KEY_PATH))
 
 cmd = '/usr/bin/ssh-keygen -t rsa -b 2048 -N "" -f ' + ORACLE_KEY_PATH
+ctx.logger.info('Executing {0}' . format(cmd))
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 stdout, stderr = p.communicate()
 
