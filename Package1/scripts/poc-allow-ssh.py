@@ -30,18 +30,22 @@ with open(SSH_AUTH_FILE, 'r') as f:
 
 # Generate Oracle RAC keys
 ctx.logger.info('Creating path to store Oracle RAC keys: {0}' . format(os.path.dirname(ORACLE_KEY_PATH)))
-if subprocess.call(['mkdir', '-p', os.path.dirname(ORACLE_KEY_PATH)]) != 0:
-    raise NonRecoverableError("Error creating path to store Oracle RAC keys")
+cmd = 'mkdir -p ' + os.path.dirname(ORACLE_KEY_PATH)
+ctx.logger.info('Executing {0}' . format(cmd))
+p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+stdout, stderr = p.communicate()
+
+ctx.logger.info(' stdout: {0}' . format(stdout))
+ctx.logger.info(' stderr: {0}' . format(stderr))
 
 ctx.logger.info('Generating Oracle RAC keys: {0}' . format(ORACLE_KEY_PATH))
-
 cmd = '/usr/bin/ssh-keygen -t rsa -b 2048 -N "" -f ' + ORACLE_KEY_PATH
 ctx.logger.info('Executing {0}' . format(cmd))
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 stdout, stderr = p.communicate()
 
-ctx.logger.info('stdout: {0}' . format(stdout))
-ctx.logger.info('stderr: {0}' . format(stderr))
+ctx.logger.info(' stdout: {0}' . format(stdout))
+ctx.logger.info(' stderr: {0}' . format(stderr))
 
 ctx.logger.info('Reading generated Oracle RAC public key')
 with open(ORACLE_KEY_PATH + '.pub', 'r') as f:
