@@ -30,10 +30,8 @@ with open(SSH_AUTH_FILE, 'r') as f:
 
 # Generate Oracle RAC keys
 ctx.logger.info('Creating path to store Oracle RAC keys: {0}' . format(os.path.dirname(ORACLE_KEY_PATH)))
-cmd = 'mkdir -p ' + os.path.dirname(ORACLE_KEY_PATH)
-ctx.logger.info('Executing {0}' . format(cmd))
-p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-stdout, stderr = p.communicate()
+if not os.path.exists(os.path.dirname(ORACLE_KEY_PATH)):
+    os.makedirs(os.path.dirname(ORACLE_KEY_PATH))
 
 ctx.logger.info(' stdout: {0}' . format(stdout))
 ctx.logger.info(' stderr: {0}' . format(stderr))
