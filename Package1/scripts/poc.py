@@ -4,6 +4,7 @@ from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 
 PRIV_KEY_FILE = '/tmp/temp.key'
+SSH_AUTH_FILE = '/home/ubuntu/.ssh/authorized_keys'
 ORACLE_KEY_PATH = ctx.node.properties['oracle_key_path'] + '.pub'
 N1_ORACLE_KEY = '/tmp/node1.rac.key.pub'
 N2_ORACLE_KEY = '/tmp/node2.rac.key.pub'
@@ -49,11 +50,13 @@ if subprocess.call(cmd, shell=True) != 0:
 # Output the retrieved public keys
 ctx.logger.info('Reading Node #1 Oracle RAC public key')
 with open(N1_ORACLE_KEY, 'r') as f:
-    ctx.logger.info('{0}: {1}' . format(N1_ORACLE_KEY, f.read()))
+    N1_ORACLE_KEY_DATA = f.read()
+    ctx.logger.info('{0}: {1}' . format(N1_ORACLE_KEY, N1_ORACLE_KEY_DATA))
     
 ctx.logger.info('Reading Node #2 Oracle RAC public key')
 with open(N2_ORACLE_KEY, 'r') as f:
-    ctx.logger.info('{0}: {1}' . format(N2_ORACLE_KEY, f.read()))
+    N2_ORACLE_KEY_DATA = f.read()
+    ctx.logger.info('{0}: {1}' . format(N2_ORACLE_KEY, N2_ORACLE_KEY_DATA))
 
 # Swap the public keys from the nodes and send them back to the nodes (exchanging them)
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(N2_ORACLE_KEY, N1_IP + ':' + ORACLE_KEY_PATH + '.peer'))
@@ -65,6 +68,22 @@ ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(N1_ORAC
 cmd = 'scp -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ' + N1_ORACLE_KEY + ' ubuntu@' + N2_IP + ':' + ORACLE_KEY_PATH + '.peer'
 if subprocess.call(cmd, shell=True) != 0:
     raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(N2_IP + ':' + ORACLE_KEY_PATH + '.peer'))
+
+# Delete the temporary SSH public key from each node
+ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N1_IP, SSH_AUTH_FILE))
+cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sed -i "/' + N1_ORACLE_KEY_DATA + '/d" ' + SSH_AUTH_FILE
+if subprocess.call(cmd, shell=True) != 0:
+    raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N1_IP))
+cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sudo service ssh restart'
+if subprocess.call(cmd, shell=True) != 0:
+    raise NonRecoverableError("Error restarting SSH service on {0}" . format(N1_IP))
+
+cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + ' sed -i "/' + N2_ORACLE_KEY_DATA + '/d" ' + SSH_AUTH_FILE
+if subprocess.call(cmd, shell=True) != 0:
+    raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N2_IP))
+cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + ' sudo service ssh restart'
+if subprocess.call(cmd, shell=True) != 0:
+    raise NonRecoverableError("Error restarting SSH service on {0}" . format(N2_IP))
 
 ctx.logger.info('Oracle RAC keys successfully exchanged between {0} and {1}' . format(N1_IP, N2_IP))
 ctx.logger.info('Plugin script completed')
