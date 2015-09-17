@@ -32,7 +32,7 @@ ctx.download_resource(ctx.node.properties['tmp_priv_key_path'], PRIV_KEY_FILE)
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY))
 cmd = '/usr/bin/scp -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE1_ORACLE_KEY
 ctx.logger.info(' Executing: {0}' . format(cmd))
-if subprocess.call(cmd, shell=True) != 0:
+if subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True) != 0:
     raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH))
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE2_ORACLE_KEY))
 cmd = '/usr/bin/scp -i ' + PRIV_KEY_FILE + ' ubuntu@' + node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE2_ORACLE_KEY
