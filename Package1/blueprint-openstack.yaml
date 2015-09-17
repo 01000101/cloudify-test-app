@@ -37,13 +37,13 @@ inputs:
 
 node_types:
   joscor.nodes.FakeModule:
-    dervied_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.Root
     properties:
       tmp_priv_key_path:
         default: { get_input: oracle_tmp_priv_key_path }
         
   joscor.nodes.OracleModule:
-    dervied_from: cloudify.nodes.ApplicationModule
+    derived_from: cloudify.nodes.ApplicationModule
     properties:
       tmp_pub_key_path:
         default: { get_input: oracle_tmp_pub_key_path }
