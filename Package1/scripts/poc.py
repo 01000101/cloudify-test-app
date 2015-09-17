@@ -43,16 +43,27 @@ with open(PRIV_KEY_FILE, 'r') as f:
 ctx.logger.info('Temporary SSH key: {0}' . format(PRIV_KEY_DATA))
 
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY))
-subprocess.check_output(['/usr/bin/scp', '-i', PRIV_KEY_FILE, 'ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE1_ORACLE_KEY], stderr=subprocess.STDOUT, shell=True)
+if subprocess.call('scp -i ' + PRIV_KEY_FILE + 'ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE1_ORACLE_KEY) != 0:
+    raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH))
 ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE2_ORACLE_KEY))
-subprocess.call(['/usr/bin/scp', '-i', PRIV_KEY_FILE, 'ubuntu@' + node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH, NODE2_ORACLE_KEY])
+if subprocess.call('scp -i ' + PRIV_KEY_FILE + 'ubuntu@' + node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH + ' ' + NODE2_ORACLE_KEY) != 0:
+    raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH))
 
-ctx.logger.info('Reading Node #1 Oracle key')
+ctx.logger.info('Reading Node #1 Oracle RAC public key')
 with open(NODE1_ORACLE_KEY, 'r') as f:
     ctx.logger.info('{0}: {1}' . format(NODE1_ORACLE_KEY, f.read()))
 
-ctx.logger.info('Reading Node #2 Oracle key')
+ctx.logger.info('Reading Node #2 Oracle RAC public key')
 with open(NODE2_ORACLE_KEY, 'r') as f:
     ctx.logger.info('{0}: {1}' . format(NODE2_ORACLE_KEY, f.read()))
+
+ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(NODE2_ORACLE_KEY, node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + '.peer'))
+if subprocess.call('scp -i ' + PRIV_KEY_FILE + ' ' + NODE2_ORACLE_KEY + ' ubuntu@' + node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + '.peer') != 0:
+    raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(node_list[0].instance.host_ip + ':' + ORACLE_KEY_PATH + '.peer'))
+ctx.logger.info('Copying Oracle RAC public key from {0} to {1}' . format(NODE1_ORACLE_KEY, node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH + '.peer'))
+if subprocess.call('scp -i ' + PRIV_KEY_FILE + ' ' + NODE1_ORACLE_KEY + ' ubuntu@' + node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH + '.peer') != 0:
+    raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(node_list[1].instance.host_ip + ':' + ORACLE_KEY_PATH + '.peer'))
+
+ctx.logger.info('Oracle RAC keys successfully exchanged between {0} and {1}' . format(node_list[0].instance.host_ip, node_list[1].instance.host_ip))
 
 ctx.logger.info('Plugin script completed')

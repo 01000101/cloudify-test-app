@@ -40,8 +40,6 @@ ctx.logger.info('Generating Oracle RAC keys: {0}' . format(ORACLE_KEY_PATH))
 if subprocess.call('ssh-keygen -t rsa -b 2048 -N "" -f ' + ORACLE_KEY_PATH, shell=True) != 0:
     if not os.path.exists(ORACLE_KEY_PATH):
         raise NonRecoverableError("Error restarting the SSH service")
-    else:
-        ctx.logger.info('Keys exist')
 
 ctx.logger.info('Reading generated Oracle RAC public key')
 with open(ORACLE_KEY_PATH + '.pub', 'r') as f:
