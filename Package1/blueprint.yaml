@@ -43,10 +43,10 @@ inputs:
     default: "564be9dd-5a06-4a26-ba50-9453f972e483"
   # Temporary SSH key so we can manage the two Oracle RAC servers
   ssh_tmp_priv_key_path:
-    description: "Relative path to the temporary private key to SSH between Oracle RAC servers"
+    description: "Relative path (from blueprint) to the temporary private key to SSH between Oracle RAC servers"
     default: "keys/temp.key"
   ssh_tmp_pub_key_path:
-    description: "Relative path to the temporary public key to allow SSH into Oracle RAC servers"
+    description: "Relative path (from blueprint) to the temporary public key to allow SSH into Oracle RAC servers"
     default: "keys/temp.key.pub"
   # Location where the Oracle RAC servers will store their dynamically generated keys
   oracle_key_path:
