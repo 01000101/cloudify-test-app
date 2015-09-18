@@ -30,10 +30,8 @@ ctx.logger.info(' Node #2: {0}' . format(N2_IP))
 # Retrieve the temporary SSH private key from the blueprint
 ctx.logger.info('Copying temporary SSH key to filesystem')
 ctx.download_resource(ctx.node.properties['tmp_priv_key_path'], PRIV_KEY_FILE)
-with open(PRIV_KEY_FILE, 'r') as f:
-    ctx.logger.info('{0}: {1}' . format(PRIV_KEY_FILE, f.read()))
 
-ctx.logger.info('Setting temporary SSH key permissions')
+ctx.logger.info('Setting temporary SSH key permissions to 0600')
 os.chmod(PRIV_KEY_FILE, 0600)
 
 # Retrieve Oracle RAC public keys from each of the nodes
@@ -71,12 +69,12 @@ if subprocess.call(cmd, shell=True) != 0:
 
 # Delete the temporary SSH public key from each node
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N1_IP, SSH_AUTH_FILE))
-cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sed -i "\'$d\'" ' + SSH_AUTH_FILE
+cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sed -i "\'$$d\'" ' + SSH_AUTH_FILE
 if subprocess.call(cmd, shell=True) != 0:
     raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N1_IP))
 
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N2_IP, SSH_AUTH_FILE))
-cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + ' sed -i "\'$d\'" ' + SSH_AUTH_FILE
+cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + ' sed -i "\'$$d\'" ' + SSH_AUTH_FILE
 if subprocess.call(cmd, shell=True) != 0:
     raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N2_IP))
 
