@@ -67,7 +67,7 @@ cmd = 'scp -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ' + N1_ORACLE_
 if subprocess.call(cmd, shell=True) != 0:
     raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(N2_IP + ':' + ORACLE_KEY_PATH + '.peer'))
 
-# Delete the temporary SSH public key from each node
+# Delete the temporary SSH public key from each node (removes the last key entry)
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N1_IP, SSH_AUTH_FILE))
 cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sed -i "\'$$d\'" ' + SSH_AUTH_FILE
 if subprocess.call(cmd, shell=True) != 0:
