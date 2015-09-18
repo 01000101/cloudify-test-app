@@ -1,7 +1,7 @@
 import os
 import subprocess
 from cloudify import ctx
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, RecoverableError
 
 PRIV_KEY_FILE = '/tmp/temp.key'
 SSH_AUTH_FILE = '/home/ubuntu/.ssh/authorized_keys'
@@ -71,20 +71,13 @@ if subprocess.call(cmd, shell=True) != 0:
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N1_IP, SSH_AUTH_FILE))
 cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + """ sed -i "'\$d'" """ + SSH_AUTH_FILE
 if subprocess.call(cmd, shell=True) != 0:
-    raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N1_IP))
+    raise RecoverableError("Error removing temporary SSH public key from {0}" . format(N1_IP))
 
 ctx.logger.info('Deleting temporary SSH public key from {0}:{1}' . format(N2_IP, SSH_AUTH_FILE))
 cmd = 'ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + """ sed -i "'\$d'" """ + SSH_AUTH_FILE
 
 if subprocess.call(cmd, shell=True) != 0:
-    raise NonRecoverableError("Error removing temporary SSH public key from {0}" . format(N2_IP))
-
-# Restart the SSH service on each node to apply the SSH key changes
-ctx.logger.info('Restarting the SSH service on {0}' . format(N1_IP))
-subprocess.call('ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N1_IP + ' sudo service ssh restart', shell=True)
-
-ctx.logger.info('Restarting the SSH service on {0}' . format(N2_IP))
-subprocess.call('ssh -o "StrictHostKeyChecking no" -i ' + PRIV_KEY_FILE + ' ubuntu@' + N2_IP + ' sudo service ssh restart', shell=True)
+    raise RecoverableError("Error removing temporary SSH public key from {0}" . format(N2_IP))
 
 ctx.logger.info('Oracle RAC keys successfully exchanged between {0} and {1}' . format(N1_IP, N2_IP))
 ctx.logger.info('Plugin script completed')
