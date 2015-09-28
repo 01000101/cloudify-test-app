@@ -6,6 +6,7 @@ setup(
     version='0.1',
     author='Joshua Cornutt',
     author_email='josh@gigaspaces.com',
+    packages=['plugin'],
     install_requires=[
         'cloudify-plugins-common>=3.2.1'
     ],
