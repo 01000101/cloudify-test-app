@@ -18,5 +18,6 @@ node_types:
         default: { get_input: oracle_key_path }
     interfaces:
       cloudify.interfaces.lifecycle:
-        - configure: exchange.plugin.tasks.configure
+        configure:
+          implementation: exchange.plugin.tasks.configure
       
