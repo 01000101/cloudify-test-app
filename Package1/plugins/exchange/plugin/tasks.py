@@ -14,5 +14,5 @@ N2_ORACLE_KEY = '/tmp/node2.rac.key.pub'
 node_list = []
 
 @operation
-def facilitate(**_):
-    ctx.logger.info('facilitate() called')
+def configure(**kwargs):
+    ctx.logger.info('exchange.configure() called')
