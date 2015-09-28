@@ -14,7 +14,7 @@ node_types:
     properties:
       tmp_priv_key_path:
         default: { get_input: ssh_tmp_priv_key_path }
-      oracle_key_path:
+      exchange_key_path:
         default: { get_input: exchange_key_path }
     interfaces:
       cloudify.interfaces.lifecycle:
