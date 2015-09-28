@@ -60,8 +60,8 @@ node_types:
     properties:
       tmp_pub_key_path:
         default: { get_input: ssh_tmp_pub_key_path }
-      oracle_key_path:
-        default: { get_input: oracle_key_path }
+      exchange_key_path:
+        default: { get_input: exchange_key_path }
         
 # Actual server / app deployment definitions
 node_templates:
