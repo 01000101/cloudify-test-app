@@ -1,0 +1,59 @@
+body {
+    
+}
+
+.glyphicon {
+    top: 0;
+}
+
+header > .navbar {
+    border-radius: 0.25rem 0.25rem 0 0;
+    margin-bottom: 0px;
+}
+
+footer > .navbar {
+    border-radius: 0 0 0.25rem 0.25rem;
+    margin-bottom: 0px;
+}
+
+footer > .navbar > .navbar-nav {
+    width: 100%;
+}
+
+footer > .navbar > .navbar-nav > p {
+    color: #9d9d9d;
+    margin-bottom: 0px;
+    line-height: 50px;
+    font-size: 14px;
+}
+
+footer > .navbar > .navbar-nav > p:hover {
+    color: white;
+}
+
+.btn-et-mock, .btn-et-mock:active, .btn-et-mock:visited, .btn-et-mock:focus {
+    margin-top: 15px;
+    background-color: transparent;
+    color: white;
+    border-color: white;
+    border-width: 2px;
+    font-size: 18px;
+    text-shadow: black 4px 2px;
+}
+
+.btn-et-mock:hover {
+    color: #337ab7;
+    border-color: #337ab7;
+    text-shadow: none;
+}
+
+.tweet-scheduling {
+    margin-left: 15px;
+    margin-right: 15px;
+	padding: 15px 0px;
+    width: inherit;
+	
+	background-color: #F8F8FB;
+    border: 1px lightgrey solid;
+    border-radius: 0px 0px 4px 4px;
+}

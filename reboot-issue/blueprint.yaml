@@ -31,50 +31,22 @@ inputs:
     default: "Ext-Net"
   os_internal_network:
     description: "Internal network (name) in OpenStack"
-    default: "Joscor-Int-Net"
+    default: "Joscor-Int-Net-02"
   os_internal_subnet:
     description: "Internal network (name) in OpenStack"
-    default: "Joscor-Int-Subnet"
+    default: "Joscor-Int-Subnet-02"
   os_security_group:
     description: "Security Group (name) in OpenStack"
-    default: "Joscor-Sec-01"
+    default: "Joscor-Sec-02"
   os_host_image_id:
     description: "Image UUID for the host server"
     default: "564be9dd-5a06-4a26-ba50-9453f972e483"
-  # Temporary SSH key so we can manage the two Oracle RAC servers
-  ssh_tmp_priv_key_path:
-    description: "Relative path (from blueprint) to the temporary private key to SSH between Oracle RAC servers"
-    default: "keys/temp.key"
-  ssh_tmp_pub_key_path:
-    description: "Relative path (from blueprint) to the temporary public key to allow SSH into Oracle RAC servers"
-    default: "keys/temp.key.pub"
-  # Location where the Oracle RAC servers will store their dynamically generated keys
-  oracle_key_path:
-    description: "Absolute path to where the Oracle RAC keys will be generated / retrieved (creates file + file.pub)"
-    default: "/tmp/oracle/joscor.key"
   agent_user:
     description: "Cloudify deployment username"
     default: "ubuntu"
   agent_ssh_key:
     description: "Cloudify deployment SSH key file path"
     default: "/root/.ssh/agent_key.pem"
-
-node_types:
-  poc.nodes.FakeModule:
-    derived_from: cloudify.nodes.Root
-    properties:
-      tmp_priv_key_path:
-        default: { get_input: ssh_tmp_priv_key_path }
-      oracle_key_path:
-        default: { get_input: oracle_key_path }
-        
-  poc.nodes.OracleModule:
-    derived_from: cloudify.nodes.ApplicationModule
-    properties:
-      tmp_pub_key_path:
-        default: { get_input: ssh_tmp_pub_key_path }
-      oracle_key_path:
-        default: { get_input: oracle_key_path }
         
 # Actual server / app deployment definitions
 node_templates:
@@ -112,7 +84,7 @@ node_templates:
   ## OpenStack Hosts ##
   #####################
   # Container (host_01)
-  host_01:
+  host:
     type: cloudify.openstack.nodes.Server
     properties:
       resource_id: "Oracle-Host-01"
@@ -131,75 +103,12 @@ node_templates:
       - target: host_security_group
         type: cloudify.openstack.server_connected_to_security_group
         
-  host_02:
-    type: cloudify.openstack.nodes.Server
-    properties:
-      resource_id: "Oracle-Host-02"
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              image: { get_input: os_host_image_id }
-              flavor: 102
-    relationships:
-      - target: host_network
-        type: cloudify.relationships.connected_to
-      - target: host_subnet
-        type: cloudify.relationships.depends_on
-      - target: host_security_group
-        type: cloudify.openstack.server_connected_to_security_group
-        
   ###################################
   ## OpenStack Application Servers ##
   ###################################
-  oracle_rac_01:
+  app_server:
     type: cloudify.nodes.ApplicationServer
     relationships:
       - type: cloudify.relationships.contained_in
-        target: host_01
-  
-  oracle_rac_02:
-    type: cloudify.nodes.ApplicationServer
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: host_02
-        
-  ############################
-  ## OpenStack Applications ##
-  ############################
-  oracle_rac_app_01:
-    # ApplicationModule == cloudify.nodes.Root
-    type: poc.nodes.OracleModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/poc-allow-ssh.py
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: oracle_rac_01
-
-  oracle_rac_app_02:
-    # ApplicationModule == cloudify.nodes.Root
-    type: poc.nodes.OracleModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/poc-allow-ssh.py
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: oracle_rac_02
-  
-  #######################################
-  ## Module to facilitate key exchange ##
-  #######################################
-  fake_module:
-    type: poc.nodes.FakeModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/poc.py
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: oracle_rac_02
-      - type: cloudify.relationships.depends_on
-        target: oracle_rac_app_01
-      - type: cloudify.relationships.depends_on
-        target: oracle_rac_app_02
+        target: host
+ 

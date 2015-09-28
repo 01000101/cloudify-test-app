@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+    <head>
+        <title>Cloudify Architect</title>
+		<meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+
+		<!-- AngularJS HTML5 Mode -->
+        <base href="/">
+        
+		<!-- Third Party Styles -->
+        <!--   Bootstrap v3 -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+        <!--   Custom styles bundled + minified -->
+        <link rel="stylesheet" href="assets/css/dist/bundle.min.css">
+    </head>
+    <body>
+        <!-- Angular template anchor -->
+        <div class="container-fluid">
+            <header></header>
+            <div ng-view class="autoscroll: true;"></div>
+            <footer></footer>
+        </div>
+        
+    
+		<!-- Third Party Scripts -->
+        <!--   jQuery 2.x -->
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+		<!--   Bootstrap v3 -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+        <!--   Angular JS -->
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-route.min.js"></script>
+
+		<!--   ngStorage (for local storage persistence, includes custom mods) -->
+		<!-- <script src="assets/libs/ngStorage.js"></script> -->
+		
+		<!--   UI Bootstrap (Angular Bootstrap components) -->
+		<script src="assets/libs/ui-bootstrap-custom-tpls-0.13.3.min.js"></script>
+		
+		<!--   JSON-2-YAML -->
+		<script src="node_modules/yamljs/dist/yaml.min.js"></script>
+		
+        <!--   The entire AngularJS app bundled + minified -->
+        <script src="assets/js/dist/bundle.min.js"></script>
+	</body>
+</html>
