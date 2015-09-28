@@ -6,7 +6,7 @@ from cloudify.exceptions import NonRecoverableError
 PUB_KEY_FILE = '/tmp/temp.key.pub'
 PUB_KEY_DATA = ''
 SSH_AUTH_FILE = '/home/ubuntu/.ssh/authorized_keys'
-ORACLE_KEY_PATH = ctx.node.properties['oracle_key_path']
+ORACLE_KEY_PATH = ctx.node.properties['exchange_key_path']
 
 ctx.logger.info('Initializing plugin script: scripts/poc-allow-ssh.py')
 
@@ -29,19 +29,19 @@ with open(SSH_AUTH_FILE, 'r') as f:
     ctx.logger.info('authorized_keys: {0}' . format(f.read()))
 
 # Generate Oracle RAC keys
-ctx.logger.info('Creating path to store Oracle RAC keys: {0}' . format(os.path.dirname(ORACLE_KEY_PATH)))
+ctx.logger.info('Creating path to store keys: {0}' . format(os.path.dirname(ORACLE_KEY_PATH)))
 if not os.path.exists(os.path.dirname(ORACLE_KEY_PATH)):
     os.makedirs(os.path.dirname(ORACLE_KEY_PATH))
 
 if not os.path.exists(os.path.dirname(ORACLE_KEY_PATH)):
     ctx.logger.info('Creating path failed')
     
-ctx.logger.info('Generating Oracle RAC keys: {0}' . format(ORACLE_KEY_PATH))
+ctx.logger.info('Generating keys: {0}' . format(ORACLE_KEY_PATH))
 if subprocess.call('ssh-keygen -t rsa -b 2048 -N "" -f ' + ORACLE_KEY_PATH, shell=True) != 0:
     if not os.path.exists(ORACLE_KEY_PATH):
         raise NonRecoverableError("Error restarting the SSH service")
 
-ctx.logger.info('Reading generated Oracle RAC public key')
+ctx.logger.info('Reading generated public key')
 with open(ORACLE_KEY_PATH + '.pub', 'r') as f:
     ctx.logger.info('{0}: {1}' . format(ORACLE_KEY_PATH + '.pub', f.read()))
 

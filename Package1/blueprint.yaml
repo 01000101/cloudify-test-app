@@ -50,9 +50,9 @@ inputs:
     description: "Relative path (from blueprint) to the temporary public key to allow SSH into Oracle RAC servers"
     default: "keys/temp.key.pub"
   # Location where the Oracle RAC servers will store their dynamically generated keys
-  oracle_key_path:
-    description: "Absolute path to where the Oracle RAC keys will be generated / retrieved (creates file + file.pub)"
-    default: "/tmp/oracle/poc.key"
+  exchange_key_path:
+    description: "Absolute path to where the keys will be generated / retrieved (creates file + file.pub)"
+    default: "/tmp/exchange/poc.key"
 
 node_types:    
   poc.nodes.OracleModule:
