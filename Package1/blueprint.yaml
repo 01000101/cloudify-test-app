@@ -42,14 +42,14 @@ inputs:
   os_host_image_flavor:
     description: "Image size for the host server"
     default: 102
-  # Temporary SSH key so we can manage the two Oracle RAC servers
+  # Temporary SSH key so we can manage the servers
   ssh_tmp_priv_key_path:
     description: "Relative path (from blueprint) to the temporary private key to SSH between Oracle RAC servers"
     default: "keys/temp.key"
   ssh_tmp_pub_key_path:
     description: "Relative path (from blueprint) to the temporary public key to allow SSH into Oracle RAC servers"
     default: "keys/temp.key.pub"
-  # Location where the Oracle RAC servers will store their dynamically generated keys
+  # Location where the servers will store their dynamically generated keys
   exchange_key_path:
     description: "Absolute path to where the keys will be generated / retrieved (creates file + file.pub)"
     default: "/tmp/exchange/poc.key"

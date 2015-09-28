@@ -9,7 +9,7 @@ from cloudify.decorators import operation
 
 # Globals
 SSH_AUTH_FILE = '/home/ubuntu/.ssh/authorized_keys'
-PUBLIC_KEY_PATH = ctx.node.properties['exchange_key_path'] + '.pub'
+PUBLIC_KEY_PATH = ''
 
 class ExchangeTracker:
     def __init__(self, privateKeyPath=''):
@@ -57,6 +57,8 @@ def retrievePublicKey(et, nodeIp):
 
 @operation
 def configure(**kwargs):
+    PUBLIC_KEY_PATH = ctx.node.properties['exchange_key_path'] + '.pub'
+    
     # Init a tracking class & create a temporary dir for use
     et = ExchangeTracker(getTemporaryFile())
     
