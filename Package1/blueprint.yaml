@@ -22,7 +22,8 @@ tosca_definitions_version: cloudify_dsl_1_1
 # Import common definitions
 imports:
   - http://www.getcloudify.org/spec/cloudify/3.2.1/types.yaml
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.2.1/plugin.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/1.2.1/plugin.yaml
+  - plugins/exchange/plugin.yaml
   
 # Accepted inputs
 inputs:
@@ -31,16 +32,16 @@ inputs:
     default: "Ext-Net"
   os_internal_network:
     description: "Internal network (name) in OpenStack"
-    default: "Joscor-Int-Net"
+    default: "POC-Int-Net"
   os_internal_subnet:
     description: "Internal network (name) in OpenStack"
-    default: "Joscor-Int-Subnet"
-  os_security_group:
-    description: "Security Group (name) in OpenStack"
-    default: "Joscor-Sec-01"
+    default: "POC-Int-Subnet"
   os_host_image_id:
     description: "Image UUID for the host server"
     default: "564be9dd-5a06-4a26-ba50-9453f972e483"
+  os_host_image_flavor:
+    description: "Image size for the host server"
+    default: 102
   # Temporary SSH key so we can manage the two Oracle RAC servers
   ssh_tmp_priv_key_path:
     description: "Relative path (from blueprint) to the temporary private key to SSH between Oracle RAC servers"
@@ -51,17 +52,9 @@ inputs:
   # Location where the Oracle RAC servers will store their dynamically generated keys
   oracle_key_path:
     description: "Absolute path to where the Oracle RAC keys will be generated / retrieved (creates file + file.pub)"
-    default: "/tmp/oracle/joscor.key"
+    default: "/tmp/oracle/poc.key"
 
-node_types:
-  poc.nodes.PoCModule:
-    derived_from: cloudify.nodes.Root
-    properties:
-      tmp_priv_key_path:
-        default: { get_input: ssh_tmp_priv_key_path }
-      oracle_key_path:
-        default: { get_input: oracle_key_path }
-        
+node_types:    
   poc.nodes.OracleModule:
     derived_from: cloudify.nodes.ApplicationModule
     properties:
@@ -97,11 +90,6 @@ node_templates:
       - target: host_network
         type: cloudify.relationships.contained_in
   
-  host_security_group:
-    type: cloudify.openstack.nodes.SecurityGroup
-    properties:
-      resource_id: { get_input: os_security_group }
-  
   #####################
   ## OpenStack Hosts ##
   #####################
@@ -116,14 +104,12 @@ node_templates:
           inputs:
             args:
               image: { get_input: os_host_image_id }
-              flavor: 102
+              flavor: { get_input: os_host_image_flavor }
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
       - target: host_subnet
         type: cloudify.relationships.depends_on
-      - target: host_security_group
-        type: cloudify.openstack.server_connected_to_security_group
         
   host_02:
     type: cloudify.openstack.nodes.Server
@@ -135,14 +121,12 @@ node_templates:
           inputs:
             args:
               image: { get_input: os_host_image_id }
-              flavor: 102
+              flavor: { get_input: os_host_image_flavor }
     relationships:
       - target: host_network
         type: cloudify.relationships.connected_to
       - target: host_subnet
         type: cloudify.relationships.depends_on
-      - target: host_security_group
-        type: cloudify.openstack.server_connected_to_security_group
         
   ###################################
   ## OpenStack Application Servers ##
@@ -186,10 +170,7 @@ node_templates:
   ## Module to facilitate key exchange ##
   #######################################
   poc_module:
-    type: poc.nodes.PoCModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/poc.py
+    type: exchange.nodes.Facilitator
     relationships:
       - type: cloudify.relationships.contained_in
         target: oracle_rac_02
