@@ -129,6 +129,8 @@ def configure(**kwargs):
             node.ip,
             SSH_AUTH_FILE
         )
+        ctx.logger.info('Executing: {0}' .format(cmd))
+        
         if subprocess.call(cmd, shell=True) != 0:
             raise RecoverableError("Error removing temporary SSH public key from {0}" . format(
                 node.ip
