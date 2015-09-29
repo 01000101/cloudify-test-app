@@ -67,7 +67,7 @@ def configure(**kwargs):
     
     # If less than 2 nodes were discovered, that's a problem...
     ctx.logger.info('{0} nodes discovered' . format(len(nodeIpList)))
-    if len(node_list) < 2:
+    if len(et.nodes) < 2:
         raise NonRecoverableError("Exchange plugin requires at least 2 dependent nodes")
     
     # Output each node IP
