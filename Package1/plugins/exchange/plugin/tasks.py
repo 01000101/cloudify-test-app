@@ -124,7 +124,7 @@ def configure(**kwargs):
 
     # Delete the temporary SSH public key from each node (removes the last key entry)
     for idx, node in enumerate(et.nodes):
-        cmd = 'ssh -o "StrictHostKeyChecking no" -i {0} ubuntu@{1} ' + """ sed -i "'\$d'" """ + '{2}' .format(
+        cmd = 'ssh -o "StrictHostKeyChecking no" -i {0} ubuntu@{1}' + """ sed -i "'\$d'" """ + '{2}' .format(
             et.privateKey,
             node.ip,
             SSH_AUTH_FILE
