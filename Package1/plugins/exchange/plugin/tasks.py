@@ -9,7 +9,7 @@ from cloudify.decorators import operation
 
 # Globals
 SSH_AUTH_FILE = '/home/ubuntu/.ssh/authorized_keys'
-PUBLIC_KEY_PATH = ''
+XCHG_KEY_PATH = ''
 
 class ExchangeTracker:
     def __init__(self, privateKeyPath=''):
@@ -43,22 +43,29 @@ def retrievePublicKey(et, nodeIp):
     node = ExchangeNode(nodeIp, getTemporaryFile())
     
     # Retrieve Oracle RAC public keys from each of the nodes
-    ctx.logger.info('Copying public key from {0} to {1}' . format(node.ip + ':' + PUBLIC_KEY_PATH, node.path))
+    ctx.logger.info('Copying public key from {0}:{1} to {2}' . format(
+        node.ip,
+        XCHG_KEY_PATH + '.pub',
+        node.path
+    ))
     cmd = '/usr/bin/scp -o "StrictHostKeyChecking no" -i {0} ubuntu@{1}:{2} {3}' .format(
         et.privateKey,
         node.ip,
-        PUBLIC_KEY_PATH,
+        XCHG_KEY_PATH + '.pub',
         node.path
     )
     if subprocess.call(cmd, shell=True) != 0:
-        raise NonRecoverableError("Error copying Oracle RAC public key from {0}" . format(node.ip + ':' + PUBLIC_KEY_PATH))
+        raise NonRecoverableError("Error copying public key from {0}:{1}" . format(
+            node.ip,
+            XCHG_KEY_PATH + '.pub'
+        ))
     
     return node
 
 @operation
 def configure(**kwargs):
-    global PUBLIC_KEY_PATH
-    PUBLIC_KEY_PATH = ctx.node.properties['exchange_key_path'] + '.pub'
+    global XCHG_KEY_PATH
+    XCHG_KEY_PATH = ctx.node.properties['exchange_key_path']
     
     # Init a tracking class & create a temporary dir for use
     et = ExchangeTracker(getTemporaryFile())
@@ -116,7 +123,7 @@ def configure(**kwargs):
                     ))
 
     # Delete the temporary SSH public key from each node (removes the last key entry)
-    for idx, node in et.nodes:
+    for idx, node in enumerate(et.nodes):
         cmd = 'ssh -o "StrictHostKeyChecking no" -i {0} ubuntu@{1} ' + """ sed -i "'\$d'" """ + '{2}' .format(
             et.privateKey,
             node.ip,
@@ -131,8 +138,8 @@ def configure(**kwargs):
     
 @operation
 def install_linux_agent(**kwargs):
-    global PUBLIC_KEY_PATH
-    PUBLIC_KEY_PATH = ctx.node.properties['exchange_key_path'] + '.pub'
+    global XCHG_KEY_PATH
+    XCHG_KEY_PATH = ctx.node.properties['exchange_key_path']
     tmp_pub_key = getTemporaryFile()
     
     # Install temporary public SSH key into authorized_keys so LAST_NODE can access this system
@@ -154,21 +161,21 @@ def install_linux_agent(**kwargs):
         ctx.logger.info('authorized_keys: {0}' . format(f.read()))
     
     # Generate Oracle RAC keys
-    ctx.logger.info('Creating path to store keys: {0}' . format(os.path.dirname(PUBLIC_KEY_PATH)))
-    if not os.path.exists(os.path.dirname(PUBLIC_KEY_PATH)):
-        os.makedirs(os.path.dirname(PUBLIC_KEY_PATH))
+    ctx.logger.info('Creating path to store keys: {0}' . format(os.path.dirname(XCHG_KEY_PATH)))
+    if not os.path.exists(os.path.dirname(XCHG_KEY_PATH)):
+        os.makedirs(os.path.dirname(XCHG_KEY_PATH))
     
-    if not os.path.exists(os.path.dirname(PUBLIC_KEY_PATH)):
+    if not os.path.exists(os.path.dirname(XCHG_KEY_PATH)):
         ctx.logger.info('Creating path failed')
         
-    ctx.logger.info('Generating keys: {0}' . format(PUBLIC_KEY_PATH))
-    if subprocess.call('ssh-keygen -t rsa -b 2048 -N "" -f ' + PUBLIC_KEY_PATH, shell=True) != 0:
-        if not os.path.exists(PUBLIC_KEY_PATH):
-            raise NonRecoverableError("Error restarting the SSH service")
+    ctx.logger.info('Generating keys: {0}' . format(XCHG_KEY_PATH))
+    if subprocess.call('ssh-keygen -t rsa -b 2048 -N "" -f ' + XCHG_KEY_PATH, shell=True) != 0:
+        if not os.path.exists(XCHG_KEY_PATH):
+            raise NonRecoverableError("Error generating keys")
     
     ctx.logger.info('Reading generated public key')
-    with open(PUBLIC_KEY_PATH + '.pub', 'r') as f:
-        ctx.logger.info('{0}: {1}' . format(PUBLIC_KEY_PATH + '.pub', f.read()))
+    with open(XCHG_KEY_PATH + '.pub', 'r') as f:
+        ctx.logger.info('{0}: {1}' . format(XCHG_KEY_PATH + '.pub', f.read()))
     
     # Enable LAST_NODE to access this system via SSH
     ctx.logger.info('Restarting the SSH service')
