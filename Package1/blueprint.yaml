@@ -1,21 +1,18 @@
-###############################################################################
-## This will spin up 2x Oracle RAC servers (not really, but we'll call
-## them that) and have them both dynamically create SSH keys on their local
-## filesystem (oracle_key_path). A 3rd node called poc_module will spin up
-## after both of the Oracle RAC servers have completely started + configured
-## themselves.  This 3rd node will facilitate exchanging each of the newly
-## created keys on the RAC servers between eachother.  RAC#1 will recieve
-## RAC#2's key and vice-versa in the directory that oracle_key_path includes.
-## The exchanged key will end up with ".peer" extension to whatever
-## oracle_key_path is.
+###################################################################################
+## This will spin up multiple application servers and have them dynamically
+## create SSH keys on their local filesystem (exchange_key_path). A 3rd node
+## called facilitator_module will spin up after all of the servers have completely
+## configured themselves. This node will facilitate exchanging each of the newly
+## created keys on the servers between eachother.  APP#1 will recieve
+## APP#2's key and vice-versa in the directory that exchange_key_path includes.
 ##
 ## A pre-created key pair is passed in via ssh_tmp_priv_key_path and
 ## ssh_tmp_pub_key_path. The public portion is installed in authorized_keys
-## of each of the RAC servers.  The private portion is given to the
-## poc_module so it may SCP information between the RAC severs later. 
+## of each of the app servers.  The private portion is given to the
+## facilitator_module so it may SCP information between the app severs later. 
 ##
 ## Note - This is a PoC and received minimal security consideration.
-###############################################################################
+###################################################################################
 
 tosca_definitions_version: cloudify_dsl_1_1
 
@@ -27,15 +24,6 @@ imports:
   
 # Accepted inputs
 inputs:
-  os_external_network:
-    description: "External network (name) in OpenStack"
-    default: "Ext-Net"
-  os_internal_network:
-    description: "Internal network (name) in OpenStack"
-    default: "POC-Int-Net"
-  os_internal_subnet:
-    description: "Internal network (name) in OpenStack"
-    default: "POC-Int-Subnet"
   os_host_image_id:
     description: "Image UUID for the host server"
     default: "564be9dd-5a06-4a26-ba50-9453f972e483"
@@ -44,137 +32,74 @@ inputs:
     default: 102
   # Temporary SSH key so we can manage the servers
   ssh_tmp_priv_key_path:
-    description: "Relative path (from blueprint) to the temporary private key to SSH between Oracle RAC servers"
+    description: "Relative path (from blueprint) to the temporary private key to SSH between app servers"
     default: "keys/temp.key"
   ssh_tmp_pub_key_path:
-    description: "Relative path (from blueprint) to the temporary public key to allow SSH into Oracle RAC servers"
+    description: "Relative path (from blueprint) to the temporary public key to allow SSH into app servers"
     default: "keys/temp.key.pub"
   # Location where the servers will store their dynamically generated keys
   exchange_key_path:
     description: "Absolute path to where the keys will be generated / retrieved (creates file + file.pub)"
     default: "/tmp/exchange/poc.key"
 
-node_types:    
-  poc.nodes.OracleModule:
+# Types
+node_types:
+  poc.nodes.Server:
+    derived_from: cloudify.openstack.nodes.Server
+    properties:
+      image:
+        default: { get_input: os_host_image_id }
+      flavor:
+        default: { get_input: os_host_image_flavor }
+    
+  poc.nodes.ApplicationModule:
     derived_from: cloudify.nodes.ApplicationModule
     properties:
       tmp_pub_key_path:
         default: { get_input: ssh_tmp_pub_key_path }
       exchange_key_path:
         default: { get_input: exchange_key_path }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/poc-allow-ssh.py
         
 # Actual server / app deployment definitions
 node_templates:
-  #####################################
-  ## OpenStack Networking Components ##
-  #####################################
-  # Network for app
-  host_network:
-    type: cloudify.openstack.nodes.Network
-    properties:
-      resource_id: { get_input: os_internal_network }
-      
-  # Subnet for app
-  host_subnet:
-    type: cloudify.openstack.nodes.Subnet
-    properties:
-      resource_id: { get_input: os_internal_subnet }
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              cidr: 172.16.0.0/24
-              ip_version: 4
-    relationships:
-      - target: host_network
-        type: cloudify.relationships.contained_in
-  
-  #####################
-  ## OpenStack Hosts ##
-  #####################
-  # Container (host_01)
+  ###########
+  ## Hosts ##
+  ###########
   host_01:
-    type: cloudify.openstack.nodes.Server
+    type: poc.nodes.Server
     properties:
-      resource_id: "Oracle-Host-01"
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              image: { get_input: os_host_image_id }
-              flavor: { get_input: os_host_image_flavor }
-    relationships:
-      - target: host_network
-        type: cloudify.relationships.connected_to
-      - target: host_subnet
-        type: cloudify.relationships.depends_on
+      resource_id: "POC-Host-01"
         
   host_02:
     type: cloudify.openstack.nodes.Server
     properties:
-      resource_id: "Oracle-Host-02"
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              image: { get_input: os_host_image_id }
-              flavor: { get_input: os_host_image_flavor }
-    relationships:
-      - target: host_network
-        type: cloudify.relationships.connected_to
-      - target: host_subnet
-        type: cloudify.relationships.depends_on
+      resource_id: "POC-Host-02"
         
-  ###################################
-  ## OpenStack Application Servers ##
-  ###################################
-  oracle_rac_01:
-    type: cloudify.nodes.ApplicationServer
+  ##################
+  ## Applications ##
+  ##################
+  app_01:
+    type: poc.nodes.ApplicationModule
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_01
-  
-  oracle_rac_02:
-    type: cloudify.nodes.ApplicationServer
+
+  app_02:
+    type: poc.nodes.ApplicationModule
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_02
-        
-  ############################
-  ## OpenStack Applications ##
-  ############################
-  oracle_rac_app_01:
-    # ApplicationModule == cloudify.nodes.Root
-    type: poc.nodes.OracleModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/poc-allow-ssh.py
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: oracle_rac_01
-
-  oracle_rac_app_02:
-    # ApplicationModule == cloudify.nodes.Root
-    type: poc.nodes.OracleModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/poc-allow-ssh.py
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: oracle_rac_02
   
   #######################################
   ## Module to facilitate key exchange ##
   #######################################
-  poc_module:
+  facilitator_module:
     type: exchange.nodes.Facilitator
     relationships:
-      - type: cloudify.relationships.contained_in
-        target: oracle_rac_02
       - type: cloudify.relationships.depends_on
-        target: oracle_rac_app_01
+        target: app_01
       - type: cloudify.relationships.depends_on
-        target: oracle_rac_app_02
+        target: app_02
