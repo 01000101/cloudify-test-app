@@ -9,7 +9,7 @@ from cloudify.decorators import operation
 
 # Globals
 XCHG_SSH_AUTH_FILE = ''
-XCHG_KEY_PATH = ''
+XCHG_KEY_PATH = '/tmp/exchange/poc.key'
 XCHG_SSH_USER = ''
 
 class ExchangeTracker:
@@ -66,11 +66,9 @@ def retrievePublicKey(et, nodeIp):
 
 @operation
 def configure(**kwargs):
-    global XCHG_KEY_PATH
     global XCHG_SSH_USER
     global XCHG_SSH_AUTH_FILE
     
-    XCHG_KEY_PATH = ctx.node.properties['exchange_key_path']
     XCHG_SSH_USER = ctx.node.properties['exchange_ssh_user']
     XCHG_SSH_AUTH_FILE = ctx.node.properties['exchange_ssh_authorized_keys_path']
     
@@ -150,10 +148,8 @@ def configure(**kwargs):
     
 @operation
 def install_linux_agent(**kwargs):
-    global XCHG_KEY_PATH
     global XCHG_SSH_AUTH_FILE
     
-    XCHG_KEY_PATH = ctx.node.properties['exchange_key_path']
     XCHG_SSH_AUTH_FILE = ctx.node.properties['exchange_ssh_authorized_keys_path']
     
     tmp_pub_key = getTemporaryFile()
