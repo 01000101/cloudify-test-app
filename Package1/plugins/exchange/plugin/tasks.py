@@ -57,6 +57,7 @@ def retrievePublicKey(et, nodeIp):
 
 @operation
 def configure(**kwargs):
+    global PUBLIC_KEY_PATH
     PUBLIC_KEY_PATH = ctx.node.properties['exchange_key_path'] + '.pub'
     
     # Init a tracking class & create a temporary dir for use
@@ -130,6 +131,7 @@ def configure(**kwargs):
     
 @operation
 def install_linux_agent(**kwargs):
+    global PUBLIC_KEY_PATH
     PUBLIC_KEY_PATH = ctx.node.properties['exchange_key_path'] + '.pub'
     tmp_pub_key = getTemporaryFile()
     
