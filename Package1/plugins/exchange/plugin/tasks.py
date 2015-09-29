@@ -88,7 +88,7 @@ def configure(**kwargs):
         et.nodes.append(retrievePublicKey(et, nodeIp))
     
     # Output the retrieved public keys
-    for idx, node in et.nodes:
+    for idx, node in enumerate(et.nodes):
         ctx.logger.info('Reading Node #{0} ({1}) public key' .format(
             idx,
             node.ip
