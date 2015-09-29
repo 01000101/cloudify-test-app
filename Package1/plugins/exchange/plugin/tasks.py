@@ -17,7 +17,7 @@ class ExchangeTracker:
         self.nodes = []
         
 class ExchangeNode:
-    def __init__(self, i='', path=''):
+    def __init__(self, ip='', path=''):
         self.ip = ip
         self.path = path
 
