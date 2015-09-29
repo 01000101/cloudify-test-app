@@ -48,7 +48,7 @@ def retrievePublicKey(et, nodeIp):
         XCHG_KEY_PATH + '.pub',
         node.path
     ))
-    cmd = '/usr/bin/scp -o "StrictHostKeyChecking no" -i {0} ubuntu@{1}:{2} {3}' .format(
+    cmd = '/usr/bin/scp -o "StrictHostKeyChecking no" -i {0} ubuntu@{1}:{2} {3}' . format(
         et.privateKey,
         node.ip,
         XCHG_KEY_PATH + '.pub',
@@ -80,10 +80,10 @@ def configure(**kwargs):
     
     # Output each node IP
     for nodeIp in nodeIpList:
-        ctx.logger.info(' IP: {0}' .format(nodeIp))
+        ctx.logger.info(' IP: {0}' . format(nodeIp))
     
     # Retrieve the temporary SSH private key from the blueprint
-    ctx.logger.info('Copying temporary SSH key to {0}' .format(et.privateKey))
+    ctx.logger.info('Copying temporary SSH key to {0}' . format(et.privateKey))
     ctx.download_resource(ctx.node.properties['tmp_priv_key_path'], et.privateKey)
     
     # SSH/SCP will complain if the private is not permissioned properly
@@ -96,7 +96,7 @@ def configure(**kwargs):
     
     # Output the retrieved public keys
     for idx, node in enumerate(et.nodes):
-        ctx.logger.info('Reading Node #{0} ({1}) public key' .format(
+        ctx.logger.info('Reading Node #{0} ({1}) public key' . format(
             idx,
             node.ip
         ))
@@ -111,7 +111,7 @@ def configure(**kwargs):
         for nodeFrom in et.nodes:
             if nodeTo != nodeFrom:
                 ctx.logger.info('Copying public key from {0} to {1}' . format(nodeFrom.ip, nodeTo.ip))
-                cmd = 'scp -o "StrictHostKeyChecking no" -i {0} {1} ubuntu@{2}:{1}' .format(
+                cmd = 'scp -o "StrictHostKeyChecking no" -i {0} {1} ubuntu@{2}:{1}' . format(
                     et.privateKey,
                     nodeFrom.path,
                     nodeTo.ip
@@ -124,12 +124,13 @@ def configure(**kwargs):
 
     # Delete the temporary SSH public key from each node (removes the last key entry)
     for idx, node in enumerate(et.nodes):
-        cmd = 'ssh -o "StrictHostKeyChecking no" -i {0} ubuntu@{1}' + """ sed -i "'\$d'" """ + '{2}' .format(
+        cmd = 'ssh -o "StrictHostKeyChecking no" -i {0} ubuntu@{1} {2} {3}' . format(
             et.privateKey,
             node.ip,
+            """ sed -i "'\$d'" """,
             SSH_AUTH_FILE
         )
-        ctx.logger.info('Executing: {0}' .format(cmd))
+        ctx.logger.info('Executing: {0}' . format(cmd))
         
         if subprocess.call(cmd, shell=True) != 0:
             raise RecoverableError("Error removing temporary SSH public key from {0}" . format(
