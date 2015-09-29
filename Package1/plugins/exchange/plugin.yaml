@@ -15,14 +15,40 @@ node_types:
   exchange.nodes.Facilitator:
     derived_from: cloudify.nodes.Root
     properties:
-      tmp_priv_key_path:
-        default: { get_input: ssh_tmp_priv_key_path }
+      exchange_tmp_priv_key_path:
+        default: keys/temp.key
+        description: >
+          Relative path (from blueprint) to the temporary private key to SSH between app servers
       exchange_key_path:
-        default: { get_input: exchange_key_path }
+        default: /tmp/exchange/poc.key
+        description: >
+          Absolute path to where the keys will be generated / retrieved (creates file + file.pub)
       exchange_ssh_user:
-        default: { get_input: exchange_ssh_user }
+        default: ubuntu
+        description: >
+          User to use for SSH'ing to servers (may be separate from the user the Cloudify manager uses for SSH)
+      exchange_ssh_authorized_keys_path:
+        default: /home/ubuntu/.ssh/authorized_keys
+        description: >
+          Absolute path to the "authorized_keys" file used to allow SSH clients to connect based on public keys
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: exchange_facilitator.plugin.tasks.configure
+          
+  exchange.nodes.Agent:
+    derived_from: cloudify.nodes.Root
+    properties:
+      exchange_tmp_pub_key_path:
+        default: keys/temp.key.pub
+        description: >
+          Relative path (from blueprint) to the temporary public key to allow SSH into app servers
+      exchange_key_path:
+        default: /tmp/exchange/poc.key
+        description: >
+          Absolute path to where the keys will be generated / retrieved (creates file + file.pub)
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: exchange_agent.plugin.tasks.install_linux_agent
           

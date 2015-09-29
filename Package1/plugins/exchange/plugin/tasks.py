@@ -8,7 +8,7 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
 
 # Globals
-SSH_AUTH_FILE = '~/.ssh/authorized_keys'
+XCHG_SSH_AUTH_FILE = ''
 XCHG_KEY_PATH = ''
 XCHG_SSH_USER = ''
 
@@ -68,9 +68,11 @@ def retrievePublicKey(et, nodeIp):
 def configure(**kwargs):
     global XCHG_KEY_PATH
     global XCHG_SSH_USER
+    global XCHG_SSH_AUTH_FILE
     
     XCHG_KEY_PATH = ctx.node.properties['exchange_key_path']
     XCHG_SSH_USER = ctx.node.properties['exchange_ssh_user']
+    XCHG_SSH_AUTH_FILE = ctx.node.properties['exchange_ssh_authorized_keys_path']
     
     # Init a tracking class & create a temporary dir for use
     et = ExchangeTracker(getTemporaryFile())
@@ -89,7 +91,7 @@ def configure(**kwargs):
     
     # Retrieve the temporary SSH private key from the blueprint
     ctx.logger.info('Copying temporary SSH key to {0}' . format(et.privateKey))
-    ctx.download_resource(ctx.node.properties['tmp_priv_key_path'], et.privateKey)
+    ctx.download_resource(ctx.node.properties['exchange_tmp_priv_key_path'], et.privateKey)
     
     # SSH/SCP will complain if the private is not permissioned properly
     ctx.logger.info('Setting temporary SSH key permissions to 0600')
@@ -135,7 +137,7 @@ def configure(**kwargs):
             XCHG_SSH_USER,
             node.ip,
             """ sed -i "'\$d'" """,
-            SSH_AUTH_FILE
+            XCHG_SSH_AUTH_FILE
         )
         ctx.logger.info('Executing: {0}' . format(cmd))
         
@@ -149,12 +151,16 @@ def configure(**kwargs):
 @operation
 def install_linux_agent(**kwargs):
     global XCHG_KEY_PATH
+    global XCHG_SSH_AUTH_FILE
+    
     XCHG_KEY_PATH = ctx.node.properties['exchange_key_path']
+    XCHG_SSH_AUTH_FILE = ctx.node.properties['exchange_ssh_authorized_keys_path']
+    
     tmp_pub_key = getTemporaryFile()
     
     # Install temporary public SSH key into authorized_keys so LAST_NODE can access this system
     ctx.logger.info('Copying temporary SSH key to filesystem')
-    ctx.download_resource(ctx.node.properties['tmp_pub_key_path'], tmp_pub_key)
+    ctx.download_resource(ctx.node.properties['exchange_ssh_tmp_pub_key_path'], tmp_pub_key)
     
     ctx.logger.info('Retrieving temporary SSH key into memory')
     with open(tmp_pub_key, 'r') as f:
@@ -163,11 +169,11 @@ def install_linux_agent(**kwargs):
     ctx.logger.info('Temporary SSH key: {0}' . format(PUB_KEY_DATA))
     
     ctx.logger.info('Adding temporary SSH key to authorized_keys list')
-    with open(SSH_AUTH_FILE, 'a') as f:
+    with open(XCHG_SSH_AUTH_FILE, 'a') as f:
         f.write(PUB_KEY_DATA)
     
     ctx.logger.info('Reading authorized_keys list')
-    with open(SSH_AUTH_FILE, 'r') as f:
+    with open(XCHG_SSH_AUTH_FILE, 'r') as f:
         ctx.logger.info('authorized_keys: {0}' . format(f.read()))
     
     # Generate Oracle RAC keys
