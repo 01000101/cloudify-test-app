@@ -51,6 +51,18 @@ node_types:
         default: { get_input: os_host_image_id }
       flavor:
         default: { get_input: os_host_image_flavor }
+    
+  poc.nodes.ApplicationModule:
+    derived_from: cloudify.nodes.ApplicationModule
+    properties:
+      tmp_pub_key_path:
+        default: { get_input: ssh_tmp_pub_key_path }
+      exchange_key_path:
+        default: { get_input: exchange_key_path }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: exchange_agent.plugin.tasks.install_linux_agent
         
 # Actual server / app deployment definitions
 node_templates:
@@ -71,13 +83,13 @@ node_templates:
   ## Applications ##
   ##################
   app_01:
-    type: exchange.nodes.LinuxAgent
+    type: poc.nodes.ApplicationModule
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_01
 
   app_02:
-    type: exchange.nodes.LinuxAgent
+    type: poc.nodes.ApplicationModule
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_02

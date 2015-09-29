@@ -1,10 +1,10 @@
 tosca_definitions_version: cloudify_dsl_1_1
 
 plugins:
-  exchange:
+  exchange_facilitator:
     executor: central_deployment_agent
     source: exchange
-  agent:
+  exchange_agent:
     executor: host_agent
     source: exchange
   
@@ -22,16 +22,5 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: exchange.plugin.tasks.configure
+          implementation: exchange_facilitator.plugin.tasks.configure
           
-  exchange.nodes.LinuxAgent:
-    derived_from: cloudify.nodes.ApplicationModule
-    properties:
-      tmp_pub_key_path:
-        default: { get_input: ssh_tmp_pub_key_path }
-      exchange_key_path:
-        default: { get_input: exchange_key_path }
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: agent.plugin.tasks.install_linux_agent
