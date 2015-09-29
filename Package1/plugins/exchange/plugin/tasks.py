@@ -8,8 +8,9 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
 
 # Globals
-SSH_AUTH_FILE = '/home/ubuntu/.ssh/authorized_keys'
+SSH_AUTH_FILE = '~/.ssh/authorized_keys'
 XCHG_KEY_PATH = ''
+XCHG_SSH_USER = ''
 
 class ExchangeTracker:
     def __init__(self, privateKeyPath=''):
@@ -48,8 +49,9 @@ def retrievePublicKey(et, nodeIp):
         XCHG_KEY_PATH + '.pub',
         node.path
     ))
-    cmd = '/usr/bin/scp -o "StrictHostKeyChecking no" -i {0} ubuntu@{1}:{2} {3}' . format(
+    cmd = '/usr/bin/scp -o "StrictHostKeyChecking no" -i {0} {1}@{2}:{3} {4}' . format(
         et.privateKey,
+        XCHG_SSH_USER,
         node.ip,
         XCHG_KEY_PATH + '.pub',
         node.path
@@ -65,7 +67,10 @@ def retrievePublicKey(et, nodeIp):
 @operation
 def configure(**kwargs):
     global XCHG_KEY_PATH
+    global XCHG_SSH_USER
+    
     XCHG_KEY_PATH = ctx.node.properties['exchange_key_path']
+    XCHG_SSH_USER = ctx.node.properties['exchange_ssh_user']
     
     # Init a tracking class & create a temporary dir for use
     et = ExchangeTracker(getTemporaryFile())
@@ -111,9 +116,10 @@ def configure(**kwargs):
         for nodeFrom in et.nodes:
             if nodeTo != nodeFrom:
                 ctx.logger.info('Copying public key from {0} to {1}' . format(nodeFrom.ip, nodeTo.ip))
-                cmd = 'scp -o "StrictHostKeyChecking no" -i {0} {1} ubuntu@{2}:{1}' . format(
+                cmd = 'scp -o "StrictHostKeyChecking no" -i {0} {1} {2}@{3}:{1}' . format(
                     et.privateKey,
                     nodeFrom.path,
+                    XCHG_SSH_USER,
                     nodeTo.ip
                 )
                 if subprocess.call(cmd, shell=True) != 0:
@@ -124,8 +130,9 @@ def configure(**kwargs):
 
     # Delete the temporary SSH public key from each node (removes the last key entry)
     for idx, node in enumerate(et.nodes):
-        cmd = 'ssh -o "StrictHostKeyChecking no" -i {0} ubuntu@{1} {2} {3}' . format(
+        cmd = 'ssh -o "StrictHostKeyChecking no" -i {0} {1}@{2} {3} {4}' . format(
             et.privateKey,
+            XCHG_SSH_USER,
             node.ip,
             """ sed -i "'\$d'" """,
             SSH_AUTH_FILE

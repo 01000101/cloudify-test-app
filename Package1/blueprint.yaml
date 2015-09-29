@@ -41,6 +41,10 @@ inputs:
   exchange_key_path:
     description: "Absolute path to where the keys will be generated / retrieved (creates file + file.pub)"
     default: "/tmp/exchange/poc.key"
+  # User to use for SSH'ing to servers (may be separate from the user the Cloudify manager uses for SSH)
+  exchange_ssh_user:
+    description: "User to use for SSH'ing to servers (may be separate from the user the Cloudify manager uses for SSH)"
+    default: "ubuntu"
 
 # Types
 node_types:
