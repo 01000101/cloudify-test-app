@@ -28,12 +28,17 @@ node_templates:
   host_01:
     type: poc.nodes.Server
     properties:
-      resource_id: "POC-Host-01"
+      resource_id: "Exchange-Host-01"
         
   host_02:
     type: poc.nodes.Server
     properties:
-      resource_id: "POC-Host-02"
+      resource_id: "Exchange-Host-02"
+      
+  host_03:
+    type: poc.nodes.Server
+    properties:
+      resource_id: "Exchange-Host-03"
         
   ##################
   ## Applications ##
@@ -49,6 +54,12 @@ node_templates:
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_02
+        
+  exchange_agent_03:
+    type: exchange.nodes.Agent
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host_03
   
   #######################################
   ## Module to facilitate key exchange ##
@@ -60,3 +71,5 @@ node_templates:
         target: exchange_agent_01
       - type: cloudify.relationships.depends_on
         target: exchange_agent_02
+      - type: cloudify.relationships.depends_on
+        target: exchange_agent_03
