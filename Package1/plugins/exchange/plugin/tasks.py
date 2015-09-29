@@ -23,9 +23,9 @@ class ExchangeNode:
 
 # Generate the path to a temporary file
 def getTemporaryFile():
-    tmpKeyPath = '/tmp/' + uuid.uuid4()
+    tmpKeyPath = '/tmp/' + str(uuid.uuid4())
     while os.path.isfile(tmpKeyPath):
-        tmpKeyPath = '/tmp/' + uuid.uuid4()
+        tmpKeyPath = '/tmp/' + str(uuid.uuid4())
     return tmpKeyPath
 
 # Find any dependent nodes to retrieve keys from
