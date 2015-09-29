@@ -156,7 +156,7 @@ def install_linux_agent(**kwargs):
     
     # Install temporary public SSH key into authorized_keys so LAST_NODE can access this system
     ctx.logger.info('Copying temporary SSH key to filesystem')
-    ctx.download_resource(ctx.node.properties['exchange_ssh_tmp_pub_key_path'], tmp_pub_key)
+    ctx.download_resource(ctx.node.properties['exchange_tmp_pub_key_path'], tmp_pub_key)
     
     ctx.logger.info('Retrieving temporary SSH key into memory')
     with open(tmp_pub_key, 'r') as f:
