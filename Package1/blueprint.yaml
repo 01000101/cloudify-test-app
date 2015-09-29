@@ -74,7 +74,7 @@ node_templates:
       resource_id: "POC-Host-01"
         
   host_02:
-    type: cloudify.openstack.nodes.Server
+    type: poc.nodes.Server
     properties:
       resource_id: "POC-Host-02"
         
