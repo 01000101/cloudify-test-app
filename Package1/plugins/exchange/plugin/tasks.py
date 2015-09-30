@@ -69,8 +69,9 @@ def configure(**kwargs):
     global XCHG_SSH_USER
     global XCHG_SSH_AUTH_FILE
     
-    XCHG_SSH_USER = ctx.node.properties['exchange_ssh_user']
-    XCHG_SSH_AUTH_FILE = ctx.node.properties['exchange_ssh_authorized_keys_path']
+    XCHG_SSH_USER = ctx.node.properties['agent_ssh_user']
+    XCHG_SSH_AUTH_FILE = ctx.node.properties['agent_authorized_keys_path']
+    XCHG_PRIVATE_KEY_PATH = ctx.node.properties['agent_private_key_path']
     
     # Init a tracking class & create a temporary dir for use
     et = ExchangeTracker(getTemporaryFile())
@@ -89,7 +90,7 @@ def configure(**kwargs):
     
     # Retrieve the temporary SSH private key from the blueprint
     ctx.logger.info('Copying temporary SSH key to {0}' . format(et.privateKey))
-    ctx.download_resource(ctx.node.properties['exchange_tmp_priv_key_path'], et.privateKey)
+    ctx.download_resource(XCHG_PRIVATE_KEY_PATH, et.privateKey)
     
     # SSH/SCP will complain if the private is not permissioned properly
     ctx.logger.info('Setting temporary SSH key permissions to 0600')
@@ -150,13 +151,14 @@ def configure(**kwargs):
 def install_linux_agent(**kwargs):
     global XCHG_SSH_AUTH_FILE
     
-    XCHG_SSH_AUTH_FILE = ctx.node.properties['exchange_ssh_authorized_keys_path']
+    XCHG_SSH_AUTH_FILE = ctx.node.properties['agent_authorized_keys_path']
+    XCHG_PUBLIC_KEY_PATH = ctx.node.properties['exchange_tmp_pub_key_path']
     
     tmp_pub_key = getTemporaryFile()
     
     # Install temporary public SSH key into authorized_keys so LAST_NODE can access this system
     ctx.logger.info('Copying temporary SSH key to filesystem')
-    ctx.download_resource(ctx.node.properties['exchange_tmp_pub_key_path'], tmp_pub_key)
+    ctx.download_resource(XCHG_PUBLIC_KEY_PATH, tmp_pub_key)
     
     ctx.logger.info('Retrieving temporary SSH key into memory')
     with open(tmp_pub_key, 'r') as f:

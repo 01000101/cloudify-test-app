@@ -6,19 +6,59 @@ imports:
   - http://www.getcloudify.org/spec/openstack-plugin/1.2.1/plugin.yaml
   - plugins/exchange/plugin.yaml
 
+inputs:
+  server_image_id:
+    default: 564be9dd-5a06-4a26-ba50-9453f972e483
+    type: string
+    description: >
+      OpenStack image UUID for the host servers
+  server_image_flavor:
+    default: 102
+    type: integer
+    description: >
+      OpenStack image flavor code for the host servers
+  agent_private_key_path:
+    default: keys/temp.key
+    type: string
+    description: >
+      Relative path (from blueprint) to the private key to SSH between a facilitator and agents
+  agent_public_key_path:
+    default: keys/temp.key.pub
+    type: string
+    description: >
+      Relative path (from blueprint) to the public key to allow SSH between a facilitator and agents
+  agent_ssh_user:
+    default: ubuntu
+    type: string
+    description: >
+      User to use for SSH'ing into agents (may be separate from the user the Cloudify manager uses for SSH)
+  agent_authorized_keys_path:
+    default: /home/ubuntu/.ssh/authorized_keys
+    type: string
+    description: >
+      Absolute path to the "authorized_keys" file on agent nodes to allow the facilitator access to an agent
+
 # Types
 node_types:
-  poc.nodes.Server:
+  local.nodes.Server:
     derived_from: cloudify.openstack.nodes.Server
     properties:
-      image:
-        default: 564be9dd-5a06-4a26-ba50-9453f972e483
-        description: >
-          OpenStack image UUID for the host server
-      flavor:
-        default: 102
-        description: >
-          OpenStack image size for the host server
+      image: { default: { get_input: server_image_id } }
+      flavor: { default: { get_input: server_image_flavor } }
+      
+  local.nodes.exchange.Facilitator:
+    derived_from: exchange.nodes.Facilitator
+    properties:
+      agent_private_key_path: { default: { get_input: agent_private_key_path } }
+      agent_ssh_user: { default: { get_input: agent_ssh_user } }
+      agent_authorized_keys_path: { default: { get_input: agent_authorized_keys_path } }
+      
+  local.nodes.exchange.Agent:
+    derived_from: exchange.nodes.Agent
+    properties:
+      agent_public_key_path: { default: { get_input: agent_public_key_path } }
+      agent_authorized_keys_path: { default: { get_input: agent_authorized_keys_path } }
+      
         
 # Actual server / app deployment definitions
 node_templates:
@@ -26,37 +66,37 @@ node_templates:
   ## Hosts ##
   ###########
   host_01:
-    type: poc.nodes.Server
+    type: local.nodes.Server
     properties:
-      resource_id: "Exchange-Host-01"
+      resource_id: Exchange-Host-01
         
   host_02:
-    type: poc.nodes.Server
+    type: local.nodes.Server
     properties:
-      resource_id: "Exchange-Host-02"
+      resource_id: Exchange-Host-02
       
   host_03:
-    type: poc.nodes.Server
+    type: local.nodes.Server
     properties:
-      resource_id: "Exchange-Host-03"
+      resource_id: Exchange-Host-03
         
   ##################
   ## Applications ##
   ##################
   exchange_agent_01:
-    type: exchange.nodes.Agent
+    type:  local.nodes.exchange.Agent
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_01
 
   exchange_agent_02:
-    type: exchange.nodes.Agent
+    type:  local.nodes.exchange.Agent
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_02
         
   exchange_agent_03:
-    type: exchange.nodes.Agent
+    type:  local.nodes.exchange.Agent
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_03
@@ -65,7 +105,7 @@ node_templates:
   ## Module to facilitate key exchange ##
   #######################################
   facilitator_module:
-    type: exchange.nodes.Facilitator
+    type: local.nodes.exchange.Facilitator
     relationships:
       - type: cloudify.relationships.depends_on
         target: exchange_agent_01
