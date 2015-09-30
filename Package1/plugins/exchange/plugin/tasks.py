@@ -152,7 +152,7 @@ def install_linux_agent(**kwargs):
     global XCHG_SSH_AUTH_FILE
     
     XCHG_SSH_AUTH_FILE = ctx.node.properties['agent_authorized_keys_path']
-    XCHG_PUBLIC_KEY_PATH = ctx.node.properties['exchange_tmp_pub_key_path']
+    XCHG_PUBLIC_KEY_PATH = ctx.node.properties['agent_public_key_path']
     
     tmp_pub_key = getTemporaryFile()
     
