@@ -16,7 +16,7 @@ class ExchangeNode:
     def __init__(self, ip='', path=''):
         self.ip = ip
         self.path = path
-
+        
 # Find any dependent nodes to retrieve keys from
 def discoverDependents():
     node_list = []
@@ -27,6 +27,7 @@ def discoverDependents():
     
     return node_list
 
+@parallel
 def retrievePublicKey():
     ctx.logger.info("Executing on {0} as {1}" . format(
         fabric.api.env.host,
@@ -62,7 +63,12 @@ def configure(**kwargs):
     fabric.api.env.hosts = nodeIpList
     
     # Retrieve public keys from each of the nodes
-    fabric.api.execute(retrievePublicKey)
+    with fabric.api.settings(
+        user=ctx.node.properties['cloudify_agent'].get('user'),
+        key_filename=ctx.node.properties['cloudify_agent'].get('agent_key_path'),
+        disable_known_hosts=True
+    ):
+        fabric.api.execute(retrievePublicKey)
     
     # Output the retrieved public keys
     for idx, nodeIp in enumerate(nodeIpList):
