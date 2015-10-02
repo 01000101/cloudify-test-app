@@ -7,19 +7,9 @@ angular
 			sharedHeaderCtrl
 		]);
 
-function sharedHeaderCtrl($scope, $window, $location,
-						  alertService, authService,
-						  FIREBASE_URI, $firebaseObject) {
-    alertService.registerObserver(function(){
-        $scope.alert = alertService.alert;
-    });
-
+function sharedHeaderCtrl($scope, $window, $location) {
     // Get the current route for menu active/inactive classes
     $scope.currentPath = $location.path();
-    
-    $scope.clearErrors = function() {
-        alertService.clearAlerts();
-    };
     
     // Add a route changer function that works regardless of underlying server
     $scope.go = function (path) {

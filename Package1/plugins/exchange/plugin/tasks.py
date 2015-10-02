@@ -2,9 +2,9 @@ import os
 import tempfile
 import uuid
 import subprocess
+from fabric
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
-# put the operation decorator on any function that is a task
 from cloudify.decorators import operation
 
 # Globals
@@ -22,13 +22,6 @@ class ExchangeNode:
         self.ip = ip
         self.path = path
 
-# Generate the path to a temporary file
-def getTemporaryFile():
-    tmpKeyPath = '/tmp/' + str(uuid.uuid4())
-    while os.path.isfile(tmpKeyPath):
-        tmpKeyPath = '/tmp/' + str(uuid.uuid4())
-    return tmpKeyPath
-
 # Find any dependent nodes to retrieve keys from
 def discoverDependents():
     node_list = []
@@ -39,39 +32,24 @@ def discoverDependents():
     
     return node_list
 
-def retrievePublicKey(et, nodeIp):
-    # Generate a unique temporary file for use
-    node = ExchangeNode(nodeIp, getTemporaryFile())
-    
-    # Retrieve Oracle RAC public keys from each of the nodes
-    ctx.logger.info('Copying public key from {0}:{1} to {2}' . format(
-        node.ip,
-        XCHG_KEY_PATH + '.pub',
-        node.path
+def retrievePublicKey():
+    ctx.logger.info("Executing on {0} as {1}" . format(
+        env.host,
+        env.user
     ))
-    cmd = '/usr/bin/scp -o "StrictHostKeyChecking no" -i {0} {1}@{2}:{3} {4}' . format(
-        et.privateKey,
-        XCHG_SSH_USER,
-        node.ip,
-        XCHG_KEY_PATH + '.pub',
-        node.path
-    )
-    if subprocess.call(cmd, shell=True) != 0:
-        raise NonRecoverableError("Error copying public key from {0}:{1}" . format(
-            node.ip,
-            XCHG_KEY_PATH + '.pub'
-        ))
     
-    return node
+    PUBKEY = open('/tmp/{0}.key.pub' . format(env.host), 'w+')
+    fabric.operations.get(XCHG_KEY_PATH + '.pub', PUBKEY)
+    PUBKEY.close()
 
 @operation
 def configure(**kwargs):
     global XCHG_SSH_USER
     global XCHG_SSH_AUTH_FILE
     
-    XCHG_SSH_USER = ctx.node.properties['agent_ssh_user']
-    XCHG_SSH_AUTH_FILE = ctx.node.properties['agent_authorized_keys_path']
-    XCHG_PRIVATE_KEY_PATH = ctx.node.properties['agent_private_key_path']
+    XCHG_SSH_USER = ctx.node.properties['facilitator_agent_ssh_user']
+    XCHG_SSH_AUTH_FILE = ctx.node.properties['facilitator_authorized_keys_path']
+    XCHG_PRIVATE_KEY_PATH = ctx.node.properties['facilitator_private_key_path']
     
     # Init a tracking class & create a temporary dir for use
     et = ExchangeTracker(getTemporaryFile())
@@ -88,17 +66,11 @@ def configure(**kwargs):
     for nodeIp in nodeIpList:
         ctx.logger.info(' IP: {0}' . format(nodeIp))
     
-    # Retrieve the temporary SSH private key from the blueprint
-    ctx.logger.info('Copying temporary SSH key to {0}' . format(et.privateKey))
-    ctx.download_resource(XCHG_PRIVATE_KEY_PATH, et.privateKey)
-    
-    # SSH/SCP will complain if the private is not permissioned properly
-    ctx.logger.info('Setting temporary SSH key permissions to 0600')
-    os.chmod(et.privateKey, 0600)
+    # Give Fabric our remote hosts list
+    env.hosts = nodeIpList
     
     # Retrieve public keys from each of the nodes
-    for nodeIp in nodeIpList:
-        et.nodes.append(retrievePublicKey(et, nodeIp))
+    fabric.api.execute(retrievePublicKey)
     
     # Output the retrieved public keys
     for idx, node in enumerate(et.nodes):
@@ -151,8 +123,8 @@ def configure(**kwargs):
 def install_linux_agent(**kwargs):
     global XCHG_SSH_AUTH_FILE
     
-    XCHG_SSH_AUTH_FILE = ctx.node.properties['agent_authorized_keys_path']
-    XCHG_PUBLIC_KEY_PATH = ctx.node.properties['agent_public_key_path']
+    XCHG_SSH_AUTH_FILE = ctx.node.properties['facilitator_agent_authorized_keys_path']
+    XCHG_PUBLIC_KEY_PATH = ctx.node.properties['facilitator_public_key_path']
     
     tmp_pub_key = getTemporaryFile()
     

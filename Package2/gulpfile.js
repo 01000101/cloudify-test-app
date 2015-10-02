@@ -4,7 +4,6 @@ var minifyCss = require('gulp-minify-css');
 var concat = require('gulp-concat');
 var minifyJs = require('gulp-uglify');
 var rename = require('gulp-rename');
-var convertYaml = require('gulp-yaml');
 
 var css = {
 	dest: './assets/css/dist',
@@ -22,14 +21,6 @@ var js = {
 		'./app/services/*.js',
 		'./app/shared/*/*.js',
 		'./app/components/*/*.js'
-	]
-};
-
-var yaml = {
-	dest: './assets/yaml/dist',
-	base: './',
-	files: [
-		'./assets/yaml/*.yaml'
 	]
 };
 
@@ -63,12 +54,6 @@ gulp.task('minify-js', function() {
 		.pipe(gulp.dest(js.dest));
 });
 
-gulp.task('convert-yaml', function() {
-	return gulp.src(yaml.files)
-		.pipe(convertYaml({space: 2}))
-		.pipe(gulp.dest(yaml.dest));
-});
-
 gulp.task('watch', function() {
 	gulp.watch(css.files, ['minify-css']);
 	gulp.watch(js.files, ['minify-js']);
@@ -77,7 +62,6 @@ gulp.task('watch', function() {
 gulp.task('default',
 	[
 		'minify-css', 'minify-js',
-		'convert-yaml',
 		'watch', 'serve'
 	], function() {
 	

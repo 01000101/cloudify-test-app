@@ -5,12 +5,15 @@ angular
             console.log('Current route: ' + $location.path());
         });
     }])
-    .config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
+    .config(['$routeProvider', '$locationProvider', '$httpProvider', function($routeProvider, $locationProvider, $httpProvider) {
+        $httpProvider.defaults.useXDomain = true;
+        delete $httpProvider.defaults.headers.common['X-Requested-With'];
+        
         $routeProvider
             // Routes views
             .when('/', {
-                templateUrl: 'app/components/architect/architectView.html',
-                controller: 'architectCtrl'
+                templateUrl: 'app/components/overview/overviewView.html',
+                controller: 'overviewCtrl'
             })
             
             .otherwise({

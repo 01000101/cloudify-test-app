@@ -15,13 +15,13 @@ node_types:
   exchange.nodes.Facilitator:
     derived_from: cloudify.nodes.Root
     properties:
-      agent_private_key_path:
+      facilitator_private_key_path:
         description: >
           Relative path (from blueprint) to the private key to SSH between a facilitator and agents
-      agent_ssh_user:
+      facilitator_agent_ssh_user:
         description: >
           User to use for SSH'ing into agents (may be separate from the user the Cloudify manager uses for SSH)
-      agent_authorized_keys_path:
+      facilitator_agent_authorized_keys_path:
         description: >
           Absolute path to the "authorized_keys" file on agent nodes to allow the facilitator access to an agent
     interfaces:
@@ -32,10 +32,10 @@ node_types:
   exchange.nodes.Agent:
     derived_from: cloudify.nodes.Root
     properties:
-      agent_public_key_path:
+      facilitator_public_key_path:
         description: >
           Relative path (from blueprint) to the public key to allow SSH between a facilitator and agents
-      agent_authorized_keys_path:
+      facilitator_agent_authorized_keys_path:
         description: >
           Absolute path to the "authorized_keys" file on agent nodes to allow the facilitator access to an agent
     interfaces:

@@ -7,8 +7,6 @@
 	"gulp-minify-css": "*",
 	"gulp-uglify": "*",
 	"gulp-concat": "*",
-	"gulp-rename": "*",
-    "gulp-yaml": "*",
-    "yamljs": "*"
+	"gulp-rename": "*"
   }
 }
