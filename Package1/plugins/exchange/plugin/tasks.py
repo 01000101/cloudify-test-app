@@ -64,8 +64,8 @@ def configure(**kwargs):
     
     # Retrieve public keys from each of the nodes
     with settings(
-        user=ctx.node.properties['cloudify_agent'].get('user'),
-        key_filename=ctx.node.properties['cloudify_agent'].get('agent_key_path'),
+        user=ctx.bootstrap.user,
+        key_filename=ctx.bootstrap.agent_key_path,
         disable_known_hosts=True
     ):
         execute(retrievePublicKey)
