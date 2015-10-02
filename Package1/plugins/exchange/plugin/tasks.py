@@ -43,7 +43,7 @@ def configure(**kwargs):
     global XCHG_SSH_AUTH_FILE
     
     XCHG_SSH_USER = ctx.node.properties['facilitator_agent_ssh_user']
-    XCHG_SSH_AUTH_FILE = ctx.node.properties['facilitator_authorized_keys_path']
+    XCHG_SSH_AUTH_FILE = ctx.node.properties['facilitator_agent_authorized_keys_path']
     XCHG_PRIVATE_KEY_PATH = ctx.node.properties['facilitator_private_key_path']
     
     ctx.logger.info('Discovering dependent nodes')
