@@ -2,7 +2,7 @@ import os
 import tempfile
 import uuid
 import subprocess
-import fabric
+from fabric.api import *
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
@@ -30,11 +30,11 @@ def discoverDependents():
 @parallel
 def retrievePublicKey():
     ctx.logger.info("Executing on {0} as {1}" . format(
-        fabric.api.env.host,
-        fabric.api.env.user
+        env.host,
+        env.user
     ))
     
-    PUBKEY = open('/tmp/{0}.key.pub' . format(fabric.api.env.host), 'w+')
+    PUBKEY = open('/tmp/{0}.key.pub' . format(env.host), 'w+')
     fabric.operations.get(XCHG_KEY_PATH + '.pub', PUBKEY)
     PUBKEY.close()
 
@@ -60,15 +60,15 @@ def configure(**kwargs):
         ctx.logger.info(' IP: {0}' . format(nodeIp))
     
     # Give Fabric our remote hosts list
-    fabric.api.env.hosts = nodeIpList
+    env.hosts = nodeIpList
     
     # Retrieve public keys from each of the nodes
-    with fabric.api.settings(
+    with settings(
         user=ctx.node.properties['cloudify_agent'].get('user'),
         key_filename=ctx.node.properties['cloudify_agent'].get('agent_key_path'),
         disable_known_hosts=True
     ):
-        fabric.api.execute(retrievePublicKey)
+        execute(retrievePublicKey)
     
     # Output the retrieved public keys
     for idx, nodeIp in enumerate(nodeIpList):
