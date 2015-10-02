@@ -113,31 +113,6 @@ def configure(**kwargs):
     
 @operation
 def install_linux_agent(**kwargs):
-    global XCHG_SSH_AUTH_FILE
-    
-    XCHG_SSH_AUTH_FILE = ctx.node.properties['facilitator_agent_authorized_keys_path']
-    XCHG_PUBLIC_KEY_PATH = ctx.node.properties['facilitator_public_key_path']
-    
-    tmp_pub_key = getTemporaryFile()
-    
-    # Install temporary public SSH key into authorized_keys so LAST_NODE can access this system
-    ctx.logger.info('Copying temporary SSH key to filesystem')
-    ctx.download_resource(XCHG_PUBLIC_KEY_PATH, tmp_pub_key)
-    
-    ctx.logger.info('Retrieving temporary SSH key into memory')
-    with open(tmp_pub_key, 'r') as f:
-        PUB_KEY_DATA = f.read()
-        
-    ctx.logger.info('Temporary SSH key: {0}' . format(PUB_KEY_DATA))
-    
-    ctx.logger.info('Adding temporary SSH key to authorized_keys list')
-    with open(XCHG_SSH_AUTH_FILE, 'a') as f:
-        f.write(PUB_KEY_DATA)
-    
-    ctx.logger.info('Reading authorized_keys list')
-    with open(XCHG_SSH_AUTH_FILE, 'r') as f:
-        ctx.logger.info('authorized_keys: {0}' . format(f.read()))
-    
     # Generate Oracle RAC keys
     ctx.logger.info('Creating path to store keys: {0}' . format(os.path.dirname(XCHG_KEY_PATH)))
     if not os.path.exists(os.path.dirname(XCHG_KEY_PATH)):
@@ -154,10 +129,5 @@ def install_linux_agent(**kwargs):
     ctx.logger.info('Reading generated public key')
     with open(XCHG_KEY_PATH + '.pub', 'r') as f:
         ctx.logger.info('{0}: {1}' . format(XCHG_KEY_PATH + '.pub', f.read()))
-    
-    # Enable LAST_NODE to access this system via SSH
-    ctx.logger.info('Restarting the SSH service')
-    if subprocess.call(['sudo', 'service', 'ssh', 'restart']) != 0:
-        raise NonRecoverableError("Error restarting the SSH service")
     
     ctx.logger.info('Plugin script completed')
