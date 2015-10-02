@@ -29,11 +29,11 @@ def discoverDependents():
 
 def retrievePublicKey():
     ctx.logger.info("Executing on {0} as {1}" . format(
-        env.host,
-        env.user
+        fabric.api.env.host,
+        fabric.api.env.user
     ))
     
-    PUBKEY = open('/tmp/{0}.key.pub' . format(env.host), 'w+')
+    PUBKEY = open('/tmp/{0}.key.pub' . format(fabric.api.env.host), 'w+')
     fabric.operations.get(XCHG_KEY_PATH + '.pub', PUBKEY)
     PUBKEY.close()
 
@@ -59,7 +59,7 @@ def configure(**kwargs):
         ctx.logger.info(' IP: {0}' . format(nodeIp))
     
     # Give Fabric our remote hosts list
-    env.hosts = nodeIpList
+    fabric.api.env.hosts = nodeIpList
     
     # Retrieve public keys from each of the nodes
     fabric.api.execute(retrievePublicKey)
