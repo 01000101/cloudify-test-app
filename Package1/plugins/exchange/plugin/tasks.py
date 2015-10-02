@@ -2,7 +2,7 @@ import os
 import tempfile
 import uuid
 import subprocess
-from fabric
+import fabric
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation

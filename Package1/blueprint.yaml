@@ -74,11 +74,6 @@ node_templates:
     type: local.nodes.Server
     properties:
       resource_id: Exchange-Host-02
-      
-  host_03:
-    type: local.nodes.Server
-    properties:
-      resource_id: Exchange-Host-03
         
   ##################
   ## Applications ##
@@ -94,12 +89,6 @@ node_templates:
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_02
-        
-  exchange_agent_03:
-    type:  local.nodes.exchange.Agent
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: host_03
   
   #######################################
   ## Module to facilitate key exchange ##
@@ -111,5 +100,3 @@ node_templates:
         target: exchange_agent_01
       - type: cloudify.relationships.depends_on
         target: exchange_agent_02
-      - type: cloudify.relationships.depends_on
-        target: exchange_agent_03
