@@ -11,11 +11,6 @@ from cloudify.decorators import operation
 XCHG_SSH_AUTH_FILE = ''
 XCHG_KEY_PATH = '/tmp/exchange/poc.key'
 XCHG_SSH_USER = ''
-
-class ExchangeTracker:
-    def __init__(self, privateKeyPath=''):
-        self.privateKey = privateKeyPath
-        self.nodes = []
         
 class ExchangeNode:
     def __init__(self, ip='', path=''):
@@ -51,9 +46,6 @@ def configure(**kwargs):
     XCHG_SSH_AUTH_FILE = ctx.node.properties['facilitator_authorized_keys_path']
     XCHG_PRIVATE_KEY_PATH = ctx.node.properties['facilitator_private_key_path']
     
-    # Init a tracking class & create a temporary dir for use
-    et = ExchangeTracker(getTemporaryFile())
-    
     ctx.logger.info('Discovering dependent nodes')
     nodeIpList = discoverDependents()
     
@@ -73,14 +65,14 @@ def configure(**kwargs):
     fabric.api.execute(retrievePublicKey)
     
     # Output the retrieved public keys
-    for idx, node in enumerate(et.nodes):
+    for idx, nodeIp in enumerate(nodeIpList):
         ctx.logger.info('Reading Node #{0} ({1}) public key' . format(
             idx,
-            node.ip
+            nodeIp
         ))
-        with open(node.path, 'r') as f:
+        with open('/tmp/{0}.key.pub' . format(nodeIp), 'r') as f:
             ctx.logger.info(' {0}: {1}' . format(
-                node.path,
+                '/tmp/{0}.key.pub' . format(nodeIp),
                 f.read()
             ))
 
