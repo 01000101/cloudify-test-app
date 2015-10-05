@@ -63,7 +63,7 @@ def exchangePublicKeys():
     
     # Find ourselves...
     for xchgAgentTo in xchgAgents:
-        if xchgAgent['ip'] == fabric.api.env.host:
+        if xchgAgentTo['ip'] == fabric.api.env.host:
             # Iterate through all nodes (except for ourself)
             for xchgAgentFrom in xchgAgents:
                 if xchgAgentFrom['ip'] != xchgAgentTo['ip']:
