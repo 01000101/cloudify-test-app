@@ -12,11 +12,17 @@ XCHG_SSH_AUTH_FILE = ''
 XCHG_KEY_PATH = '/tmp/exchange/poc.key'
 XCHG_SSH_USER = ''
 XCHG_NODES = []
+XCHG_RESULT = []
         
 class ExchangeNode:
     def __init__(self, ip='', path=''):
         self.ip = ip
         self.path = path
+        
+class ExchangeResult:
+    def __init__(self, ip='', exchanges=[]):
+        self.ip = ip
+        self.exchanges = exchanges
         
 # Find any dependent nodes to retrieve keys from
 def discoverDependents():
@@ -54,16 +60,21 @@ def retrievePublicKey():
     temp_file.close()
 
 def exchangePublicKeys():
+    global XCHG_RESULT
+    exchange = None
+    nodeTo = None;
+    
     ctx.logger.info("Executing on {0} as {1}" . format(
         env.host,
         env.user
     ))
     
-    nodeTo = None;
     for node in XCHG_NODES:
         if node.ip == env.host:
             nodeTo = node
             break
+    
+    exchange = ExchangeResult(nodeTo.ip)
     
     for nodeFrom in XCHG_NODES:
         if nodeFrom != nodeTo:
@@ -76,6 +87,12 @@ def exchangePublicKeys():
                 nodeTo.ip,
                 res
             ))
+            
+            # Log every exchange (to/from IP, public key path)
+            exchange.exchanges.append(ExchangeNode(nodeFrom.ip, res[0]))
+    
+    # Log the entire exchange for this node
+    XCHG_RESULT.append(exchange)
 
 @operation
 def configure(**kwargs):
@@ -111,18 +128,13 @@ def configure(**kwargs):
     
     # Retrieve public keys from each of the nodes
     execute(retrievePublicKey)
-    
-    # Output the retrieved public keys
-    for node in XCHG_NODES:
-        with open(node.path, 'r') as f:
-            ctx.logger.info('{0}:{1}: {2}' . format(
-                node.ip,
-                node.path,
-                f.read()
-            ))
 
     # Swap the public keys from the nodes and send them back to the nodes (exchanging them)
     execute(exchangePublicKeys)
+    
+    # Create our output
+    ctx.logger.info('XCHG_RESULT: {0}' . format(XCHG_RESULT))
+    ctx.runtime_properties['exchange_result'] = XCHG_RESULT
 
     ctx.logger.info('Plugin script completed')
     
