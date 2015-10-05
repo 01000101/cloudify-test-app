@@ -1,7 +1,6 @@
-import os
-import tempfile
-from Crypto.PublicKey import RSA
-from fabric.api import *
+import os, tempfile
+import Crypto # RSA key generating
+import fabric # Inter-server process execution
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify.decorators import operation
@@ -10,7 +9,8 @@ from cloudify.decorators import operation
 XCHG_RESULT = []
 xchgAgents = []
         
-# Find any dependent nodes to retrieve keys from
+# Find any dependent nodes to retrieve keys from and build
+# the main data structure for the exchange
 def discoverDependents():
     node_list = []
     
@@ -30,19 +30,22 @@ def discoverDependents():
     return node_list
 
 # This function retrieves the public key from the remote server,
-# updates XCHG_NODES, and cleans up
+# updates xchgAgents, and cleans up
 def retrievePublicKey():
-    ctx.logger.info("Executing on {0} as {1}" . format(env.host, env.user))
+    ctx.logger.info("Executing on {0} as {1}" . format(
+        fabric.api.env.host,
+        fabric.api.env.user
+    ))
     
     # Find ourselves...
     for idx, xchgAgent in xchgAgents:
-        if xchgAgent['ip'] == env.host:
+        if xchgAgent['ip'] == fabric.api.env.host:
             # Generate temporary file
             fd, sPath = tempfile.mkstemp()
             with os.fdopen(fd, 'w+') as temp_file:
                 # Copy the remote public key to the temporary file
                 ctx.logger.info('fabric.operations.get({0}, {1})' . format(xchgAgent['remote']['public_key'], sPath))
-                get(xchgAgent['remote']['public_key'], temp_file)
+                fabric.api.get(xchgAgent['remote']['public_key'], temp_file)
                 
                 # Log where we stashed the public key
                 xchgAgents[idx]['local']['public_key'] = sPath
@@ -55,11 +58,14 @@ def exchangePublicKeys():
     global xchgAgents
     exchanges = []
     
-    ctx.logger.info("Executing on {0} as {1}" . format(env.host, env.user))
+    ctx.logger.info("Executing on {0} as {1}" . format(
+        fabric.api.env.host,
+        fabric.api.env.user
+    ))
     
     # Find ourselves...
     for idxTo, xchgAgentTo in xchgAgents:
-        if xchgAgent['ip'] == env.host:
+        if xchgAgent['ip'] == fabric.api.env.host:
             # Iterate through all nodes (except for ourself)
             for xchgAgentFrom in xchgAgents:
                 if xchgAgentFrom['ip'] != xchgAgentTo['ip']:
@@ -69,7 +75,7 @@ def exchangePublicKeys():
                     ))
                 
                     # Copy the public key from local to a remote node
-                    res = put(nxchgAgentFrom['local']['public_key'], '/tmp/')
+                    res = fabric.api.put(nxchgAgentFrom['local']['public_key'], '/tmp/')
                     
                     ctx.logger.info(' -> file moved to {0}:{1}' . format(
                         xchgAgentTo['ip'],
@@ -93,7 +99,7 @@ def exchangePublicKeys():
 def configure(**kwargs):
     global XCHG_NODES
     global xchgAgents
-    env.hosts = []
+    fabric.api.env.hosts = []
     
     ctx.logger.info('Discovering dependent nodes')
     xchgAgents = discoverDependents()
@@ -106,19 +112,19 @@ def configure(**kwargs):
     # Add each found node IP to the Fabric hosts list
     for xchgAgent in xchgAgents:
         ctx.logger.info(' IP: {0}' . format(xchgAgent['ip']))
-        env.hosts.append(xchgAgent['ip'])
+        fabric.api.env.hosts.append(xchgAgent['ip'])
     
     # Give Fabric our connection settings
-    env.user = ctx.bootstrap_context.cloudify_agent.user
-    env.key_filename = ctx.bootstrap_context.cloudify_agent.agent_key_path
-    env.password = None
-    env.disable_known_hosts = True
+    fabric.api.env.user = ctx.bootstrap_context.cloudify_agent.user
+    fabric.api.env.key_filename = ctx.bootstrap_context.cloudify_agent.agent_key_path
+    fabric.api.env.password = None
+    fabric.api.env.disable_known_hosts = True
     
     # Retrieve public keys from each of the nodes
-    execute(retrievePublicKey)
+    fabric.api.execute(retrievePublicKey)
 
     # Swap the public keys from the nodes and send them back to the nodes (exchanging them)
-    execute(exchangePublicKeys)
+    fabric.api.execute(exchangePublicKeys)
     
     # Create our output
     ctx.logger.info('Exchanges: {0}' . format(XCHG_RESULT))
@@ -136,7 +142,8 @@ def install_linux_agent(**kwargs):
          open(sPubPath, 'w+') as fPub:
         # Generate the RSA keys
         ctx.logger.info('Generating RSA keys');
-        key = RSA.generate(2048)
+        Crypto.Random.atfork() 
+        key = Crypto.PublicKey.RSA.generate(2048)
         pubkey = key.publickey()
         
         # Write the keys with proper OpenSSH encoding
