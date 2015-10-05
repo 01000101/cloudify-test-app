@@ -73,7 +73,7 @@ def exchangePublicKeys():
                     ))
                 
                     # Copy the public key from local to a remote node
-                    res = fabric.api.put(nxchgAgentFrom['local_public_key'], '/tmp/')
+                    res = fabric.api.put(xchgAgentFrom['local_public_key'], '/tmp/')
                     
                     ctx.logger.info(' -> file moved to {0}:{1}' . format(
                         xchgAgentTo['ip'],
