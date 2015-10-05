@@ -32,13 +32,15 @@ def discoverDependents():
 # This function retrieves the public key from the remote server,
 # updates xchgAgents, and cleans up
 def retrievePublicKey():
+    global xchgAgents
+    
     ctx.logger.info("Executing on {0} as {1}" . format(
         fabric.api.env.host,
         fabric.api.env.user
     ))
     
     # Find ourselves...
-    for idx, xchgAgent in xchgAgents:
+    for idx, xchgAgent in xchgAgents.iteritems():
         if xchgAgent['ip'] == fabric.api.env.host:
             # Generate temporary file
             fd, sPath = tempfile.mkstemp()
@@ -64,7 +66,7 @@ def exchangePublicKeys():
     ))
     
     # Find ourselves...
-    for idxTo, xchgAgentTo in xchgAgents:
+    for xchgAgentTo in xchgAgents:
         if xchgAgent['ip'] == fabric.api.env.host:
             # Iterate through all nodes (except for ourself)
             for xchgAgentFrom in xchgAgents:
