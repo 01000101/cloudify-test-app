@@ -101,9 +101,9 @@ node_templates:
       - type: cloudify.relationships.depends_on
         target: exchange_agent_02
         
-output:
+outputs:
   exchange_info:
     description: |
       File paths to exchange public keys
     value:
-      keys: { get_attribute: [facilitator_module, exchange_result]}
+      exchanges: { get_attribute: [facilitator_module, exchange_result] }
