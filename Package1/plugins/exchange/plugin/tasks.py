@@ -18,13 +18,9 @@ def discoverDependents():
         if rel.type == 'cloudify.relationships.depends_on':
             node_list.append({
                 'ip': rel.target.instance.host_ip,
-                'remote': {
-                    'public_key': rel.target.instance.runtime_properties['public_key_path'],
-                    'private_key': rel.target.instance.runtime_properties['public_key_path']
-                },
-                'local': {
-                    'public_key': ''
-                }
+                'remote_public_key': rel.target.instance.runtime_properties['public_key_path'],
+                'remote_private_key': rel.target.instance.runtime_properties['public_key_path'],
+                'local_public_key': ''
             })
     
     return node_list
@@ -46,11 +42,11 @@ def retrievePublicKey():
             fd, sPath = tempfile.mkstemp()
             with os.fdopen(fd, 'w+') as temp_file:
                 # Copy the remote public key to the temporary file
-                ctx.logger.info('fabric.operations.get({0}, {1})' . format(xchgAgent['remote']['public_key'], sPath))
-                fabric.api.get(xchgAgent['remote']['public_key'], temp_file)
+                ctx.logger.info('fabric.operations.get({0}, {1})' . format(xchgAgent['remote_public_key'], sPath))
+                fabric.api.get(xchgAgent['remote_public_key'], temp_file)
                 
                 # Log where we stashed the public key
-                xchgAgents[idx]['local']['public_key'] = sPath
+                xchgAgents[idx]['local_public_key'] = sPath
             
             return
 
@@ -77,7 +73,7 @@ def exchangePublicKeys():
                     ))
                 
                     # Copy the public key from local to a remote node
-                    res = fabric.api.put(nxchgAgentFrom['local']['public_key'], '/tmp/')
+                    res = fabric.api.put(nxchgAgentFrom['local_public_key'], '/tmp/')
                     
                     ctx.logger.info(' -> file moved to {0}:{1}' . format(
                         xchgAgentTo['ip'],
