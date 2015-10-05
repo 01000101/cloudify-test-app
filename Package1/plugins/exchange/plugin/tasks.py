@@ -1,9 +1,24 @@
+"""Key Exchange Plugin
+
+This plugin is used to exchange public key files between all "agents" (servers)
+by a "Facilitator" (Cloudify Manager).  This plugin relies on Fabric for
+server communication. 
+"""
+
 import os, tempfile
 import Crypto # RSA key generating
 import fabric # Inter-server process execution
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify.decorators import operation
+
+# Metadata
+__author__ =     "Joshua Cornutt"
+__copyright__ =  "Copyright 2015, Gigaspaces"
+__license__ =    "Proprietary"
+__maintainer__ = "Joshua Cornutt"
+__email__ =      "josh@gigaspaces.com"
+__status__ =     "Development"
 
 # Globals
 XCHG_RESULT = []
