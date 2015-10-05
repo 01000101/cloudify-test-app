@@ -11,6 +11,7 @@ from cloudify.decorators import operation
 XCHG_SSH_AUTH_FILE = ''
 XCHG_KEY_PATH = '/tmp/exchange/poc.key'
 XCHG_SSH_USER = ''
+XCHG_NODES = []
         
 class ExchangeNode:
     def __init__(self, ip='', path=''):
@@ -27,23 +28,56 @@ def discoverDependents():
     
     return node_list
 
+# This function retrieves the public key from the remote server,
+# updates XCHG_NODES, and cleans up
 def retrievePublicKey():
     ctx.logger.info("Executing on {0} as {1}" . format(
         env.host,
         env.user
     ))
+
+    # Generate temporary file
+    temp_file = tempfile.mkstemp()
     
-    ctx.logger.info('Opening /tmp/{0}.key.pub' . format(env.host))
-    PUBKEY = open('/tmp/{0}.key.pub' . format(env.host), 'w+')
-    ctx.logger.info('Executing GET');
-    get(XCHG_KEY_PATH + '.pub', PUBKEY)
-    ctx.logger.info('Closing /tmp/{0}.key.pub' . format(env.host))
-    PUBKEY.close()
+    # Copy the remote public key to the temporary file
+    ctx.logger.info('fabric.operations.get({0}, {1})' . format(XCHG_KEY_PATH + '.pub', temp_file[1]))
+    get(XCHG_KEY_PATH + '.pub', temp_file[0])
+    
+    # Log where we stashed the public key
+    XCHG_NODES.append(ExchangeNode(env.host, temp_file[1]))
+    
+    # Close the temporary file
+    temp_file[0].close()
+
+def exchangePublicKeys():
+    ctx.logger.info("Executing on {0} as {1}" . format(
+        env.host,
+        env.user
+    ))
+    
+    nodeTo = None;
+    for node in XCHG_NODES:
+        if node.ip == env.host:
+            nodeTo = node
+            break
+    
+    for nodeFrom in XCHG_NODES:
+        if nodeFrom != nodeTo:
+            ctx.logger.info('Moving public key from {0} to {1}' . format(
+                nodeFrom.ip,
+                nodeTo.ip
+            ))
+            res = put(nodeFrom.path, '/tmp/')
+            ctx.logger.info(' -> file moved to {0}:{1}' . format(
+                nodeTo.ip,
+                res
+            ))
 
 @operation
 def configure(**kwargs):
     global XCHG_SSH_USER
     global XCHG_SSH_AUTH_FILE
+    global XCHG_NODES
     
     XCHG_SSH_USER = ctx.node.properties['facilitator_agent_ssh_user']
     XCHG_SSH_AUTH_FILE = ctx.node.properties['facilitator_agent_authorized_keys_path']
@@ -61,66 +95,30 @@ def configure(**kwargs):
     for nodeIp in nodeIpList:
         ctx.logger.info(' IP: {0}' . format(nodeIp))
     
-    # Give Fabric our remote hosts list
+    # Give Fabric our remote hosts list & settings
     env.hosts = nodeIpList
+    env.user = ctx.bootstrap_context.cloudify_agent.user
+    env.key_filename = ctx.bootstrap_context.cloudify_agent.agent_key_path
+    env.password = None
+    env.disable_known_hosts = True
     
-    ctx.logger.info('Manager user: {0}' . format(ctx.bootstrap_context.cloudify_agent.user))
-    ctx.logger.info('Manager key: {0}' . format(ctx.bootstrap_context.cloudify_agent.agent_key_path))
-    
+    ctx.logger.info('Manager user: {0}' . format(env.user))
+    ctx.logger.info('Manager key: {0}' . format(env.key_filename))
     
     # Retrieve public keys from each of the nodes
-    with settings(
-        user=ctx.bootstrap_context.cloudify_agent.user,
-        key_filename=ctx.bootstrap_context.cloudify_agent.agent_key_path,
-        password=None,
-        disable_known_hosts=True
-    ):
-        execute(retrievePublicKey)
+    execute(retrievePublicKey)
     
     # Output the retrieved public keys
-    for idx, nodeIp in enumerate(nodeIpList):
-        ctx.logger.info('Reading Node #{0} ({1}) public key' . format(
-            idx,
-            nodeIp
-        ))
-        with open('/tmp/{0}.key.pub' . format(nodeIp), 'r') as f:
-            ctx.logger.info(' {0}: {1}' . format(
-                '/tmp/{0}.key.pub' . format(nodeIp),
+    for node in XCHG_NODES:
+        with open(node.path, 'r') as f:
+            ctx.logger.info('{0}:{1}: {2}' . format(
+                node.ip,
+                node.path,
                 f.read()
             ))
 
     # Swap the public keys from the nodes and send them back to the nodes (exchanging them)
-    for nodeTo in et.nodes:
-        for nodeFrom in et.nodes:
-            if nodeTo != nodeFrom:
-                ctx.logger.info('Copying public key from {0} to {1}' . format(nodeFrom.ip, nodeTo.ip))
-                cmd = 'scp -o "StrictHostKeyChecking no" -i {0} {1} {2}@{3}:{1}' . format(
-                    et.privateKey,
-                    nodeFrom.path,
-                    XCHG_SSH_USER,
-                    nodeTo.ip
-                )
-                if subprocess.call(cmd, shell=True) != 0:
-                    raise NonRecoverableError("Error copying public key from {0}:{1}" . format(
-                        nodeFrom.ip,
-                        nodeFrom.path
-                    ))
-
-    # Delete the temporary SSH public key from each node (removes the last key entry)
-    for idx, node in enumerate(et.nodes):
-        cmd = 'ssh -o "StrictHostKeyChecking no" -i {0} {1}@{2} {3} {4}' . format(
-            et.privateKey,
-            XCHG_SSH_USER,
-            node.ip,
-            """ sed -i "'\$d'" """,
-            XCHG_SSH_AUTH_FILE
-        )
-        ctx.logger.info('Executing: {0}' . format(cmd))
-        
-        if subprocess.call(cmd, shell=True) != 0:
-            raise RecoverableError("Error removing temporary SSH public key from {0}" . format(
-                node.ip
-            ))
+    execute(exchangePublicKeys)
 
     ctx.logger.info('Plugin script completed')
     
