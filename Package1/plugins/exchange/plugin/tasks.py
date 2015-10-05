@@ -43,7 +43,8 @@ def retrievePublicKey():
     
     # Copy the remote public key to the temporary file
     ctx.logger.info('fabric.operations.get({0}, {1})' . format(XCHG_KEY_PATH + '.pub', temp_file[1]))
-    get(XCHG_KEY_PATH + '.pub', temp_file[0])
+    res = get(XCHG_KEY_PATH + '.pub', temp_file[1])
+    ctx.logger.info(' -> {0}' . format(res))
     
     # Log where we stashed the public key
     XCHG_NODES.append(ExchangeNode(env.host, temp_file[1]))
