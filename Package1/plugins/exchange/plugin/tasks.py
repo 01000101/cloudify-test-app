@@ -1,6 +1,7 @@
 import os
 import tempfile
 import uuid
+import json
 import subprocess
 from fabric.api import *
 from cloudify import ctx
@@ -77,7 +78,7 @@ def exchangePublicKeys():
     exchange = ExchangeResult(nodeTo.ip)
     
     for nodeFrom in XCHG_NODES:
-        if nodeFrom != nodeTo:
+        if nodeFrom.ip != nodeTo.ip:
             ctx.logger.info('Moving public key from {0} to {1}' . format(
                 nodeFrom.ip,
                 nodeTo.ip
@@ -133,7 +134,7 @@ def configure(**kwargs):
     execute(exchangePublicKeys)
     
     # Create our output
-    ctx.logger.info('XCHG_RESULT: {0}' . format(XCHG_RESULT))
+    ctx.logger.info('XCHG_RESULT: {0}' . format(json.dumps(XCHG_RESULT.__dict__)))
     ctx.instance.runtime_properties['exchange_result'] = XCHG_RESULT
 
     ctx.logger.info('Plugin script completed')
