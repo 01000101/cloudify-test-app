@@ -10,7 +10,7 @@ from cloudify.decorators import operation
 
 # Globals
 XCHG_SSH_AUTH_FILE = ''
-XCHG_KEY_PATH = '/tmp/exchange/poc.key'
+XCHG_KEY_PATH = '/tmp/exchange/xchg.tmp.key'
 XCHG_SSH_USER = ''
 XCHG_NODES = []
 XCHG_RESULT = []
@@ -19,11 +19,6 @@ class ExchangeNode:
     def __init__(self, ip='', path=''):
         self.ip = ip
         self.path = path
-        
-class ExchangeResult:
-    def __init__(self, ip='', exchanges=[]):
-        self.ip = ip
-        self.exchanges = exchanges
         
 # Find any dependent nodes to retrieve keys from
 def discoverDependents():
@@ -62,7 +57,7 @@ def retrievePublicKey():
 
 def exchangePublicKeys():
     global XCHG_RESULT
-    exchange = None
+    exchanges = []
     nodeTo = None;
     
     ctx.logger.info("Executing on {0} as {1}" . format(
@@ -74,8 +69,6 @@ def exchangePublicKeys():
         if node.ip == env.host:
             nodeTo = node
             break
-    
-    exchange = ExchangeResult(nodeTo.ip)
     
     for nodeFrom in XCHG_NODES:
         if nodeFrom.ip != nodeTo.ip:
@@ -90,10 +83,17 @@ def exchangePublicKeys():
             ))
             
             # Log every exchange (to/from IP, public key path)
-            exchange.exchanges.append(ExchangeNode(nodeFrom.ip, res[0]))
+            exchanges.append({
+                'from': nodeFrom.ip,
+                'key_path': res[0]
+            })
     
     # Log the entire exchange for this node
-    XCHG_RESULT.append(exchange)
+    XCHG_RESULT.append({
+        'to': nodeTo.ip,
+        'exchanges': exchanges
+    })
+
 
 @operation
 def configure(**kwargs):
@@ -134,7 +134,7 @@ def configure(**kwargs):
     execute(exchangePublicKeys)
     
     # Create our output
-    ctx.logger.info('XCHG_RESULT: {0}' . format(json.dumps(XCHG_RESULT.__dict__)))
+    ctx.logger.info('Exchanges: {0}' . format(XCHG_RESULT))
     ctx.instance.runtime_properties['exchange_result'] = XCHG_RESULT
 
     ctx.logger.info('Plugin script completed')
