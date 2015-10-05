@@ -31,6 +31,8 @@ def discoverDependents():
 # This function retrieves the public key from the remote server,
 # updates XCHG_NODES, and cleans up
 def retrievePublicKey():
+    global XCHG_NODES
+    
     ctx.logger.info("Executing on {0} as {1}" . format(
         env.host,
         env.user
