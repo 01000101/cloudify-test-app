@@ -1,6 +1,6 @@
 import os
 import tempfile
-import subprocess
+from Crypto.PublicKey import RSA
 from fabric.api import *
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
@@ -18,7 +18,13 @@ def discoverDependents():
         if rel.type == 'cloudify.relationships.depends_on':
             node_list.append({
                 'ip': rel.target.instance.host_ip,
-                'key_path_remote': rel.target.instance.runtime_properties['key_path'] + '.pub'
+                'remote': {
+                    'public_key': rel.target.instance.runtime_properties['public_key_path'],
+                    'private_key': rel.target.instance.runtime_properties['public_key_path']
+                },
+                'local': {
+                    'public_key': ''
+                }
             })
     
     return node_list
@@ -35,11 +41,11 @@ def retrievePublicKey():
             fd, sPath = tempfile.mkstemp()
             with os.fdopen(fd, 'w+') as temp_file:
                 # Copy the remote public key to the temporary file
-                ctx.logger.info('fabric.operations.get({0}, {1})' . format(xchgAgent['key_path_remote'], sPath))
-                get(xchgAgent['key_path_remote'], temp_file)
+                ctx.logger.info('fabric.operations.get({0}, {1})' . format(xchgAgent['remote']['public_key'], sPath))
+                get(xchgAgent['remote']['public_key'], temp_file)
                 
                 # Log where we stashed the public key
-                xchgAgents[idx]['key_path_local'] = sPath
+                xchgAgents[idx]['local']['public_key'] = sPath
             
             return
 
@@ -63,7 +69,7 @@ def exchangePublicKeys():
                     ))
                 
                     # Copy the public key from local to a remote node
-                    res = put(nxchgAgentFrom['key_path_local'], '/tmp/')
+                    res = put(nxchgAgentFrom['local']['public_key'], '/tmp/')
                     
                     ctx.logger.info(' -> file moved to {0}:{1}' . format(
                         xchgAgentTo['ip'],
@@ -120,23 +126,30 @@ def configure(**kwargs):
     
 @operation
 def install_linux_agent(**kwargs):
-    # Create a temporary file to store our key in
-    fd, sPath = tempfile.mkstemp()
-    # Close the file we just made
-    os.close(fd)
+    # Create a temporary directory to store our keys in
+    sPath = tempfile.mkdtemp()
+    sPrivPath = sPath + '/tmp.key'
+    sPubPath = sPath + '/tmp.key.pub'
     
-    # Generate the SSH keys
-    ctx.logger.info('Generating keys: {0}[.pub]' . format(sPath))
-    if subprocess.call('ssh-keygen -t rsa -b 2048 -N "" -f ' + sPath, shell=True) != 0:
-        if (not os.path.exists(sPath)) or (not os.path.exists(sPath + '.pub')):
-            raise NonRecoverableError("Error generating keys")
+    # Create/open the files for public/private keys
+    with open(sPrivPath, 'w+') as fPriv, \
+         open(sPubPath, 'w+') as fPub:
+        # Generate the RSA keys
+        ctx.logger.info('Generating RSA keys');
+        key = RSA.generate(2048)
+        pubkey = key.publickey()
+        
+        # Write the keys with proper OpenSSH encoding
+        ctx.logger.info('Writing generated RSA keys to the filesystem')
+        fPriv.write(key.exportKey('PEM'))
+        fPub.write(pubkey.exportKey('OpenSSH'))
+    
+    # Output some basics to the user
+    ctx.logger.info('Private key path: {0}' . format(sPrivPath))
+    ctx.logger.info('Public key path: {0}' . format(sPubPath))
 
-    # Confirm the keys are OK
-    ctx.logger.info('Reading generated public key')
-    with open(sPath + '.pub', 'r') as f:
-        ctx.logger.info('{0}: {1}' . format(sPath + '.pub', f.read()))
-    
-    # Store the location of the key to our runtime properties
-    ctx.instance.runtime_properties['key_path'] = sPath
+    # Store the location of the keys to our runtime properties
+    ctx.instance.runtime_properties['public_key_path'] = sPubPath
+    ctx.instance.runtime_properties['private_key_path'] = sPrivPath
     
     ctx.logger.info('Plugin script completed')
