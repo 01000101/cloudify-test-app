@@ -40,7 +40,7 @@ def retrievePublicKey():
     ))
     
     # Find ourselves...
-    for idx, xchgAgent in xchgAgents.iteritems():
+    for idx, xchgAgent in xchgAgents:
         if xchgAgent['ip'] == fabric.api.env.host:
             # Generate temporary file
             fd, sPath = tempfile.mkstemp()
