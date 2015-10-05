@@ -134,7 +134,7 @@ def configure(**kwargs):
     
     # Create our output
     ctx.logger.info('XCHG_RESULT: {0}' . format(XCHG_RESULT))
-    ctx.runtime_properties['exchange_result'] = XCHG_RESULT
+    ctx.instance.runtime_properties['exchange_result'] = XCHG_RESULT
 
     ctx.logger.info('Plugin script completed')
     
