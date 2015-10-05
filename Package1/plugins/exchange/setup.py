@@ -2,8 +2,8 @@ from setuptools import setup
 
 setup(
     name='key-exchange-plugin',
-    description='A Cloudify plugin to exchange information between dynamically instanciated nodes',
-    version='0.1',
+    description='A Cloudify plugin to exchange public keys between dynamically instanciated nodes',
+    version='0.84',
     author='Joshua Cornutt',
     author_email='josh@gigaspaces.com',
     packages=['plugin'],

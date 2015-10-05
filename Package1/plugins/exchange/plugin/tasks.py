@@ -93,6 +93,7 @@ def exchangePublicKeys():
             })
 
 
+# Entry point for the Facilitator
 @operation
 def configure(**kwargs):
     global XCHG_NODES
@@ -127,7 +128,8 @@ def configure(**kwargs):
     # Create our output
     ctx.logger.info('Exchanges: {0}' . format(XCHG_RESULT))
     ctx.instance.runtime_properties['exchange_result'] = XCHG_RESULT
-    
+
+# Entry point for the Agent
 @operation
 def install_linux_agent(**kwargs):
     # Create a temporary directory to store our keys in
