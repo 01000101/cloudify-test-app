@@ -36,14 +36,14 @@ def retrievePublicKey():
     ))
     
     # Find ourselves...
-    for idx, xchgAgent in xchgAgents:
-        if xchgAgent['ip'] == fabric.api.env.host:
+    for idx in range(len(xchgAgents)):
+        if xchgAgents[idx]['ip'] == fabric.api.env.host:
             # Generate temporary file
             fd, sPath = tempfile.mkstemp()
             with os.fdopen(fd, 'w+') as temp_file:
                 # Copy the remote public key to the temporary file
-                ctx.logger.info('fabric.operations.get({0}, {1})' . format(xchgAgent['remote_public_key'], sPath))
-                fabric.api.get(xchgAgent['remote_public_key'], temp_file)
+                ctx.logger.info('fabric.operations.get({0}, {1})' . format(xchgAgents[idx]['remote_public_key'], sPath))
+                fabric.api.get(xchgAgents[idx]['remote_public_key'], temp_file)
                 
                 # Log where we stashed the public key
                 xchgAgents[idx]['local_public_key'] = sPath
