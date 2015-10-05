@@ -3,7 +3,6 @@ angular
     .controller('sharedHeaderCtrl',
 		[
 			'$scope', '$window', '$location',
-			'alertService', 
 			sharedHeaderCtrl
 		]);
 

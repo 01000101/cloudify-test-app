@@ -1,5 +1,5 @@
 angular
-    .module('app', ['ngRoute', 'ui.bootstrap'])
+    .module('app', ['ngRoute', 'cloudifyjs', 'ui.bootstrap'])
     .run(['$rootScope','$location', '$routeParams', function($rootScope, $location, $routeParams) {
         $rootScope.$on('$routeChangeSuccess', function(e, current, pre) {
             console.log('Current route: ' + $location.path());
@@ -8,7 +8,7 @@ angular
     .config(['$routeProvider', '$locationProvider', '$httpProvider', function($routeProvider, $locationProvider, $httpProvider) {
         $httpProvider.defaults.useXDomain = true;
         delete $httpProvider.defaults.headers.common['X-Requested-With'];
-        
+
         $routeProvider
             // Routes views
             .when('/', {

@@ -34,8 +34,11 @@ def retrievePublicKey():
         env.user
     ))
     
+    ctx.logger.info('Opening /tmp/{0}.key.pub' . format(env.host))
     PUBKEY = open('/tmp/{0}.key.pub' . format(env.host), 'w+')
-    fabric.operations.get(XCHG_KEY_PATH + '.pub', PUBKEY)
+    ctx.logger.info('Executing GET');
+    get(XCHG_KEY_PATH + '.pub', PUBKEY)
+    ctx.logger.info('Closing /tmp/{0}.key.pub' . format(env.host))
     PUBKEY.close()
 
 @operation
@@ -62,10 +65,15 @@ def configure(**kwargs):
     # Give Fabric our remote hosts list
     env.hosts = nodeIpList
     
+    ctx.logger.info('Manager user: {0}' . format(ctx.bootstrap_context.cloudify_agent.user))
+    ctx.logger.info('Manager key: {0}' . format(ctx.bootstrap_context.cloudify_agent.agent_key_path))
+    
+    
     # Retrieve public keys from each of the nodes
     with settings(
         user=ctx.bootstrap_context.cloudify_agent.user,
         key_filename=ctx.bootstrap_context.cloudify_agent.agent_key_path,
+        password=None,
         disable_known_hosts=True
     ):
         execute(retrievePublicKey)
