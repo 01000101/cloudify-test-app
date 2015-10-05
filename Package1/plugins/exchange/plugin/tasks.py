@@ -39,18 +39,19 @@ def retrievePublicKey():
     ))
 
     # Generate temporary file
-    temp_file = tempfile.mkstemp()
+    fd, sPath = tempfile.mkstemp()
+    temp_file = os.fdopen(fd, 'w+')
     
     # Copy the remote public key to the temporary file
-    ctx.logger.info('fabric.operations.get({0}, {1})' . format(XCHG_KEY_PATH + '.pub', temp_file[1]))
-    res = get(XCHG_KEY_PATH + '.pub', temp_file[1])
+    ctx.logger.info('fabric.operations.get({0}, {1})' . format(XCHG_KEY_PATH + '.pub', sPath))
+    res = get(XCHG_KEY_PATH + '.pub', temp_file)
     ctx.logger.info(' -> {0}' . format(res))
     
     # Log where we stashed the public key
-    XCHG_NODES.append(ExchangeNode(env.host, temp_file[1]))
+    XCHG_NODES.append(ExchangeNode(env.host, sPath))
     
     # Close the temporary file
-    temp_file[0].close()
+    temp_file.close()
 
 def exchangePublicKeys():
     ctx.logger.info("Executing on {0} as {1}" . format(
