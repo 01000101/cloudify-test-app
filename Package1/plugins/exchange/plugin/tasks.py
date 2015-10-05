@@ -27,7 +27,6 @@ def discoverDependents():
     
     return node_list
 
-@parallel
 def retrievePublicKey():
     ctx.logger.info("Executing on {0} as {1}" . format(
         env.host,
