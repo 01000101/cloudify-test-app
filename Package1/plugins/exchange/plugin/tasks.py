@@ -133,7 +133,6 @@ def publicKeyCleanup():
 # Entry point for the Facilitator
 @operation
 def configure(**kwargs):
-    global XCHG_NODES
     global xchgAgents
     fabric.api.env.hosts = []
     
@@ -149,22 +148,11 @@ def configure(**kwargs):
     for xchgAgent in xchgAgents:
         ctx.logger.info(' IP: {0}' . format(xchgAgent['ip']))
         fabric.api.env.hosts.append(xchgAgent['ip'])
-    
-    # Give Fabric our connection settings
-    cfy_agent_user = None
-    cfy_agent_key = None
-    
-    ctx.logger.info('agent: {0}' . format(ctx.node.properties.get('cloudify_agent')))
-    
+
     # Get the user/key from either the manager or user provided properties
-    fabric.api.env.user = ctx.node.properties.get('cloudify_agent', dict()).get(
-        'user', ctx.bootstrap_context.cloudify_agent.user
-    )
-    
-    fabric.api.env.key_filename = ctx.node.properties.get('cloudify_agent', dict()).get(
-        'key', ctx.bootstrap_context.cloudify_agent.agent_key_path
-    )
-    
+    cfy_agent = ctx.node.properties.get('cloudify_agent', dict())
+    fabric.api.env.user = cfy_agent.get('user', ctx.bootstrap_context.cloudify_agent.user)
+    fabric.api.env.key_filename = cfy_agent.get('key', ctx.bootstrap_context.cloudify_agent.agent_key_path)
     fabric.api.env.password = None
     fabric.api.env.disable_known_hosts = True
     
