@@ -9,7 +9,7 @@ import os, tempfile
 import Crypto # RSA key generating
 import fabric # Inter-server process execution
 from cloudify import ctx
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
 
 # Metadata
@@ -106,7 +106,29 @@ def exchangePublicKeys():
                 'to': xchgAgentTo['ip'],
                 'exchanges': exchanges
             })
-
+            
+def publicKeyCleanup():
+    for xchgAgent in xchgAgents:
+        pubkey_path = xchgAgent['local_public_key']
+        
+        ctx.logger.info('Purging local key for {0} at {1}' . format(
+            xchgAgent['ip'],
+            pubkey_path
+        ))
+        
+        if not os.path.exists(pubkey_path):
+            RecoverableError('Could not find local key for {0} at {1}' . format(
+                xchgAgent['ip'],
+                pubkey_path
+            ))
+            
+        try:
+            os.unlink(pubkey_path)
+        except OSError:
+            RecoverableError('Could not purge local key for {0} at {1}' . format(
+                xchgAgent['ip'],
+                pubkey_path
+            ))
 
 # Entry point for the Facilitator
 @operation
@@ -121,7 +143,7 @@ def configure(**kwargs):
     # If less than 2 nodes were discovered, that's a problem...
     ctx.logger.info('{0} nodes discovered' . format(len(xchgAgents)))
     if len(xchgAgents) < 2:
-        raise NonRecoverableError("Exchange plugin requires at least 2 dependent nodes")
+        raise NonRecoverableError('Exchange plugin requires at least 2 dependent nodes')
     
     # Add each found node IP to the Fabric hosts list
     for xchgAgent in xchgAgents:
@@ -129,8 +151,20 @@ def configure(**kwargs):
         fabric.api.env.hosts.append(xchgAgent['ip'])
     
     # Give Fabric our connection settings
-    fabric.api.env.user = ctx.bootstrap_context.cloudify_agent.user
-    fabric.api.env.key_filename = ctx.bootstrap_context.cloudify_agent.agent_key_path
+    cfy_agent_user = None
+    cfy_agent_key = None
+    
+    ctx.logger.info('agent: {0}' . format(ctx.node.properties.get('cloudify_agent')))
+    
+    # Get the user/key from either the manager or user provided properties
+    fabric.api.env.user = ctx.node.properties.get('cloudify_agent', dict()).get(
+        'user', ctx.bootstrap_context.cloudify_agent.user
+    )
+    
+    fabric.api.env.key_filename = ctx.node.properties.get('cloudify_agent', dict()).get(
+        'key', ctx.bootstrap_context.cloudify_agent.agent_key_path
+    )
+    
     fabric.api.env.password = None
     fabric.api.env.disable_known_hosts = True
     
@@ -139,6 +173,9 @@ def configure(**kwargs):
 
     # Swap the public keys from the nodes and send them back to the nodes (exchanging them)
     fabric.api.execute(exchangePublicKeys)
+    
+    # Purge locally stored public keys
+    publicKeyCleanup()
     
     # Create our output
     ctx.logger.info('Exchanges: {0}' . format(XCHG_RESULT))
