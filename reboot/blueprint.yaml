@@ -25,12 +25,15 @@ node_types:
     properties:
       image: { default: { get_input: server_image_id } }
       flavor: { default: { get_input: server_image_flavor } }
+      use_password: { default: false }
         
 # Actual server / app deployment definitions
 node_templates:
   # The host / VM
   host_01:
     type: local.nodes.Server
+    properties:
+      resource_id: Reboot-Host-01
         
   # Some application that forces a reboot of the host
   myapplication_01:

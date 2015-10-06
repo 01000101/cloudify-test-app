@@ -79,4 +79,6 @@ def configure(**kwargs):
         else:
             ctx.logger.info('{0} has finished rebooting' . format(rebootAgent['ip']))
 
-    
+    # Sleep... ZZzzz
+    ctx.logger.info('Sleeping for 30 seconds')
+    sleep(30)
