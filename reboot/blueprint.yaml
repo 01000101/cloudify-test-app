@@ -26,6 +26,7 @@ node_types:
       image: { default: { get_input: server_image_id } }
       flavor: { default: { get_input: server_image_flavor } }
       use_password: { default: false }
+      cloudify_agent: { user: Administrator }
         
 # Actual server / app deployment definitions
 node_templates:
