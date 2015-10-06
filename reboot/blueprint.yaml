@@ -31,8 +31,6 @@ node_templates:
   # The host / VM
   host_01:
     type: local.nodes.Server
-    properties:
-      resource_id: Reboot-Host-01
         
   # Some application that forces a reboot of the host
   myapplication_01:
