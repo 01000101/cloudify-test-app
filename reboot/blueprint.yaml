@@ -28,25 +28,11 @@ node_types:
         
 # Actual server / app deployment definitions
 node_templates:
-  # Security Group (allow ICMP)
-  sg_01:
-    type: cloudify.openstack.nodes.SecurityGroup
-    properties:
-      resource_id: Reboot-Security-Group
-      rules:
-        - protocol: icmp
-          port_range_min: 0
-          port_range_max: 255
-          remote_ip_prefix: 0.0.0.0/0
-  
   # VM
   host_01:
     type: local.nodes.Server
     properties:
       resource_id: Reboot-Host-01
-    relationships:
-      - type: cloudify.openstack.port_connected_to_security_group
-        target: sg_01
         
   # Some application that forces a reboot of the host
   myapplication_01:
