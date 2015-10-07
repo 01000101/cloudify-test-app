@@ -84,7 +84,7 @@ def configure(**kwargs):
                         agents_rebooted += 1
                     else:
                         ctx.logger.info('{0} has not yet started rebooting' . format(rebootAgent['ip']))
-            sleep(2)
+            sleep(1)
     
     # Spin until all agents have started responding again (finished rebooting)
     for rebootAgent in rebootAgents:
