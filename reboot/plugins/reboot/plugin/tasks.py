@@ -41,11 +41,16 @@ def agentIsAlive(agent):
     cfy_agent = ctx.node.properties.get('cloudify_agent', dict())
     agent_port = cfy_agent.get('remote_execution_port', ctx.bootstrap_context.cloudify_agent.remote_execution_port)
     
+    ctx.logger.info('Connecting to {0}:{1}' . format(agent['ip'], agent_port))
+    
     try:
-        sock.connect((agent['ip'], agent_port))
+        err = sock.connect_ex((agent['ip'], agent_port))
         sock.close()
+        
+        ctx.logger.info('  connect_ex(): {0}' . format(err))
         return True
-    except:
+    except socket.error as err:
+        ctx.logger.info('  connect_ex(EXCEPTION): {0}' . format(err))
         return False
 
 # Entry point for the Facilitator
