@@ -36,7 +36,7 @@ def discoverDependents():
 
 # Connect to server, return True on success / False on error
 def agentIsAlive(agent):
-    sock = socket.socket()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     cfy_agent = ctx.node.properties.get('cloudify_agent', dict())
     agent_port = cfy_agent.get('remote_execution_port', ctx.bootstrap_context.cloudify_agent.remote_execution_port)
