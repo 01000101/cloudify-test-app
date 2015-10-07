@@ -8,12 +8,12 @@ imports:
 
 inputs:
   server_image_id:
-    default: 001a5be0-c6b4-58f0-a70e-66417a458de4
+    default: 564be9dd-5a06-4a26-ba50-9453f972e483
     type: string
     description: >
       OpenStack image UUID for the host servers
   server_image_flavor:
-    default: 102
+    default: 101
     type: integer
     description: >
       OpenStack image flavor code for the host servers
@@ -21,31 +21,27 @@ inputs:
 # Types
 node_types:
   local.nodes.Server:
-    derived_from: cloudify.openstack.nodes.WindowsServer
+    derived_from: cloudify.openstack.nodes.Server
     properties:
       image: { default: { get_input: server_image_id } }
       flavor: { default: { get_input: server_image_flavor } }
-      use_password: { default: false }
         
 # Actual server / app deployment definitions
 node_templates:
-  # The host / VM
+  ###########
+  ## Hosts ##
+  ###########
   host_01:
     type: local.nodes.Server
     properties:
       resource_id: Reboot-Host-01
-      cloudify_agent: { user: Administrator }
         
   # Some application that forces a reboot of the host
   myapplication_01:
-    type: cloudify.nodes.WebServer
+    type: cloudify.nodes.ApplicationModule
     interfaces:
       cloudify.interfaces.lifecycle:
-        start:
-          implementation: scripts/reboot.ps1
-          inputs:
-            process:
-              command_prefix: powershell
+        configure: scripts/prereboot.py
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_01

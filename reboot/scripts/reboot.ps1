@@ -1,1 +1,0 @@
-Restart-Computer -Delay 15
