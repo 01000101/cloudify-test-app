@@ -5,6 +5,7 @@ This plugin is used to allow for graceful rebooting of dependent instances
 
 import os
 from time import sleep
+import socket
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
@@ -33,9 +34,19 @@ def discoverDependents():
     
     return node_list
 
-# Ping a server, return True on success / False on error
+# Connect to server, return True on success / False on error
 def agentIsAlive(agent):
-    return (os.system('ping -c 1 -w2 {0} > /dev/null 2>&1' . format(agent['ip'])) == 0)
+    sock = socket.socket()
+    
+    cfy_agent = ctx.node.properties.get('cloudify_agent', dict())
+    agent_port = cfy_agent.get('remote_execution_port', ctx.bootstrap_context.cloudify_agent.remote_execution_port)
+    
+    try:
+        sock.connect((agent['ip'], agent_port))
+        sock.close()
+        return True
+    except:
+        return False
 
 # Entry point for the Facilitator
 @operation
@@ -72,7 +83,6 @@ def configure(**kwargs):
     
     # Spin until all agents have started responding again (finished rebooting)
     for rebootAgent in rebootAgents:
-        
         if not agentIsAlive(rebootAgent):
             return ctx.operation.retry(
                 message = '{0} is still rebooting' . format(rebootAgent['ip']),
