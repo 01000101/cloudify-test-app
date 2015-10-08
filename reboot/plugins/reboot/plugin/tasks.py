@@ -80,27 +80,41 @@ def configure(nova_client, **kwargs):
         if len(servers) > 0:
             server = servers[0]
             
-            ctx.logger.info(' {0} interfaces: {1}' . format(
-                rebootAgent['ip'],
-                server.interface_list()
-            ))
-            ctx.logger.info(' {0} networks: {1}' . format(
-                rebootAgent['ip'],
-                server.networks
-            ))
-            ctx.logger.info(' {0} diagnostics: {1}' . format(
-                rebootAgent['ip'],
-                server.diagnostics()
-            ))
+            try:
+                ctx.logger.info(' {0} interfaces: {1}' . format(
+                    rebootAgent['ip'],
+                    server.interface_list()
+                ))
+            except:
+                ctx.logger.info(' Reading interfaces failed')
             
+            try:
+                ctx.logger.info(' {0} networks: {1}' . format(
+                    rebootAgent['ip'],
+                    server.networks
+                ))
+            except:
+                ctx.logger.info(' Reading networks failed')
+            
+            try:
+                ctx.logger.info(' {0} diagnostics: {1}' . format(
+                    rebootAgent['ip'],
+                    server.diagnostics()
+                ))
+            except:
+                ctx.logger.info(' Reading diagnostics failed')
+                
             server.reboot()
             
             sleep(2)
             
-            ctx.logger.info(' {0} diagnostics: {1}' . format(
-                rebootAgent['ip'],
-                server.diagnostics()
-            ))
+            try:
+                ctx.logger.info(' {0} diagnostics-post: {1}' . format(
+                    rebootAgent['ip'],
+                    server.diagnostics()
+                ))
+            except:
+                ctx.logger.info(' Reading diagnostics failed')
         else:
             ctx.logger.info('{0} was not found' . format(rebootAgent['ip']))
     
