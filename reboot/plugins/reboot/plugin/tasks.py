@@ -79,7 +79,7 @@ def configure(nova_client, **kwargs):
         reboot_timeout = 30
         while reboot_timeout > 0:
             ctx.logger.info('Querying state of {0}' . format(rebootAgent['ip']))
-            server = nova_client.get(server.id)
+            server = nova_client.servers.get(server.id)
             
             ctx.logger.info(pprint.pformat(
                 vars(server)
