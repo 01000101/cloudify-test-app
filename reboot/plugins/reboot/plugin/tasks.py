@@ -6,7 +6,6 @@ This plugin is used to allow for graceful rebooting of dependent instances
 import os
 import pprint
 from time import sleep
-import socket
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
@@ -36,25 +35,6 @@ def discoverDependents():
     
     return node_list
 
-# Connect to server, return True on success / False on error
-def agentIsAlive(agent):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
-    cfy_agent = ctx.node.properties.get('cloudify_agent', dict())
-    agent_port = cfy_agent.get('remote_execution_port', ctx.bootstrap_context.cloudify_agent.remote_execution_port)
-    
-    ctx.logger.info('Connecting to {0}:{1}' . format(agent['ip'], agent_port))
-    
-    try:
-        err = sock.connect_ex((agent['ip'], agent_port))
-        sock.close()
-        
-        ctx.logger.info('  connect_ex(): {0}' . format(err))
-        return True
-    except socket.error as err:
-        ctx.logger.info('  connect_ex(EXCEPTION): {0}' . format(err))
-        return False
-
 # Entry point for the Facilitator
 @operation
 @with_nova_client
@@ -72,7 +52,9 @@ def configure(nova_client, **kwargs):
 
     # Populate an array of IPs
     for rebootAgent in rebootAgents:
-        ctx.logger.info('Querying Nova for {0}' . format(rebootAgent['ip']))
+        ctx.logger.info('Querying Nova for {0}' . format(
+            rebootAgent['ip']
+        ))
         
         servers = nova_client.servers.list(
             search_opts = {
@@ -80,59 +62,36 @@ def configure(nova_client, **kwargs):
             }
         )
         
-        ctx.logger.info('Nova returned {0} results: {1}' . format(
-            len(servers),
-            servers
-        ))
+        if len(servers) != 1:
+            ctx.logger.info('Multiple results returned for server {0}' . format(
+                rebootAgent['ip']
+            ))
+            ctx.logger.info('Skipping {0}' . format(
+                rebootAgent['ip']
+            ))
+            continue
         
-        if len(servers) > 0:
-            for server in servers:
-                ctx.logger.info(' Properties: {0}' . format(
-                    vars(server)
-                ))
-            
-                ctx.logger.info('Rebooting {0}' . format(rebootAgent['ip']))
-                server.reboot()
-                
-                while server.status == 'ACTIVE':
-                    ctx.logger.info(pprint.pformat(
-                        vars(server)
-                    ))
-                    
-                    sleep(2)
-        else:
-            ctx.logger.info('{0} was not found' . format(rebootAgent['ip']))
-    
-    # Wait for all systems to go dark
-    if ctx.operation.retry_number == 0:
-        agents_rebooted = 0
+        server = servers[0]
         
-        # Print out the agents
-        for rebootAgent in rebootAgents:
-            ctx.logger.info(' IP: {0}' . format(rebootAgent['ip']))
+        ctx.logger.info('Rebooting {0}' . format(rebootAgent['ip']))
+        server.reboot()
             
-        # Spin until all agents have stopped responding (started rebooting)
-        while agents_rebooted < len(rebootAgents):
-            for rebootAgent in rebootAgents:
-                if not rebootAgent['reboot_started']:
-                    if not agentIsAlive(rebootAgent):
-                        ctx.logger.info('{0} has started rebooting' . format(rebootAgent['ip']))
-                        rebootAgent['reboot_started'] = True
-                        agents_rebooted += 1
-                    else:
-                        ctx.logger.info('{0} has not yet started rebooting' . format(rebootAgent['ip']))
-            sleep(1)
-    
-    # Spin until all agents have started responding again (finished rebooting)
-    for rebootAgent in rebootAgents:
-        if not agentIsAlive(rebootAgent):
-            return ctx.operation.retry(
-                message = '{0} is still rebooting' . format(rebootAgent['ip']),
-                retry_after = 10
-            )
-        else:
-            ctx.logger.info('{0} has finished rebooting' . format(rebootAgent['ip']))
-
+        reboot_timeout = 30
+        while reboot_timeout > 0:
+            ctx.logger.info('Querying state of {0}' . format(rebootAgent['ip']))
+            server = nova_client.get(server.id)
+            
+            ctx.logger.info(pprint.pformat(
+                vars(server)
+            ))
+            
+            if server.status != 'ACTIVE':
+                break
+            else:
+                reboot_timeout -= 1
+                sleep(2)
+        
+        
     # Sleep... ZZzzz
     ctx.logger.info('Sleeping for 30 seconds')
     sleep(30)
