@@ -57,7 +57,7 @@ def agentIsAlive(agent):
 # Entry point for the Facilitator
 @operation
 @with_nova_client
-def configure(NovaClient, **kwargs):
+def configure(nova_client, **kwargs):
     global rebootAgents
     
     # Get a handle to our OpenStack Nova connection
@@ -78,7 +78,7 @@ def configure(NovaClient, **kwargs):
         nova_search_opts['ip'].append(rebootAgent['ip'])
     
     # Find the Nova instances
-    novaClient = NovaClient.client
+    novaClient = nova_client.client
     server_list = novaClient.servers.list(
         search_opts = nova_search_opts
     )
