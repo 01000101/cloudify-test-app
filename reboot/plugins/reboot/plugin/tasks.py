@@ -6,7 +6,7 @@ This plugin is used to allow for graceful rebooting of dependent instances
 import os
 from time import sleep
 import socket
-import novaClient
+import novaclient
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
