@@ -34,24 +34,21 @@ node_templates:
     properties:
       resource_id: Reboot-Host-01
         
-  # Some application that forces a reboot of the host
+  # Some application that runs pre-reboot
   myapplication_01:
     type: cloudify.nodes.ApplicationModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/prereboot.py
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_01
   
-  # This will spin until dependencies have rebooted
+  # This causes a graceful reboot and ends when the system is back online
   reboot_module:
     type: reboot.nodes.Facilitator
     relationships:
       - type: cloudify.relationships.depends_on
         target: myapplication_01
   
-  # This will execute as soon as the reboots are complete
+  # This will execute as soon as the reboot is complete
   postreboot_module:
     type: cloudify.nodes.ApplicationModule
     interfaces:

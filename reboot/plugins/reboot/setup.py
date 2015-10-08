@@ -9,6 +9,6 @@ setup(
     packages=['plugin'],
     install_requires=[
         'cloudify-plugins-common>=3.2.1',
-        'python-novaclient'
+        'cloudify-openstack-plugin>=1.2'
     ],
 )

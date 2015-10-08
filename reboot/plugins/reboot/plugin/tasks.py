@@ -9,6 +9,7 @@ import socket
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
+import openstack_plugin_common
 
 # Metadata
 __author__ =     "Joshua Cornutt"
@@ -55,9 +56,11 @@ def agentIsAlive(agent):
 
 # Entry point for the Facilitator
 @operation
-def configure(**kwargs):
+@with_nova_client
+def configure(NovaClient, **kwargs):
     global rebootAgents
     
+    # Get a handle to our OpenStack Nova connection
     ctx.logger.info('Discovering dependent nodes')
     rebootAgents = discoverDependents()
     
@@ -65,6 +68,22 @@ def configure(**kwargs):
     ctx.logger.info('{0} nodes discovered' . format(len(rebootAgents)))
     if len(rebootAgents) < 1:
         raise NonRecoverableError('Reboot plugin requires at least 1 dependent node')
+    
+    nova_search_opts = {
+        'ip': []
+    }
+    
+    # Populate an array of IPs
+    for rebootAgent in rebootAgents:
+        nova_search_opts['ip'].append(rebootAgent['ip'])
+    
+    # Find the Nova instances
+    novaClient = NovaClient.client
+    server_list = novaClient.servers.list(
+        search_opts = nova_search_opts
+    )
+    
+    ctx.logger.info('server_list: {0}' . format(server_list))
     
     # Wait for all systems to go dark
     if ctx.operation.retry_number == 0:
