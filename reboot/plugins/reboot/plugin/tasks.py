@@ -93,7 +93,7 @@ def configure(nova_client, **kwargs):
                 ctx.logger.info('Rebooting {0}' . format(rebootAgent['ip']))
                 server.reboot()
                 
-                while server['status'] == 'ACTIVE':
+                while server.status == 'ACTIVE':
                     ctx.logger.info(' Properties: {0}' . format(
                         vars(server)
                     ))
