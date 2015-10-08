@@ -71,24 +71,35 @@ def configure(nova_client, **kwargs):
 
     # Populate an array of IPs
     for rebootAgent in rebootAgents:
-        server = nova_client.servers.list(
+        servers = nova_client.servers.list(
             search_opts = {
                 'ip': rebootAgent['ip']
             }
         )
         
         if len(server) > 0:
+            server = servers[0]
+            
             ctx.logger.info(' {0} interfaces: {1}' . format(
                 rebootAgent['ip'],
-                server[0].interface_list()
+                server.interface_list()
             ))
             ctx.logger.info(' {0} networks: {1}' . format(
                 rebootAgent['ip'],
-                server[0].networks
+                server.networks
             ))
             ctx.logger.info(' {0} diagnostics: {1}' . format(
                 rebootAgent['ip'],
-                server[0].diagnostics()
+                server.diagnostics()
+            ))
+            
+            server.reboot()
+            
+            sleep(2)
+            
+            ctx.logger.info(' {0} diagnostics: {1}' . format(
+                rebootAgent['ip'],
+                server.diagnostics()
             ))
         else:
             ctx.logger.info('{0} was not found' . format(rebootAgent['ip']))
