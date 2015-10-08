@@ -65,56 +65,65 @@ def configure(nova_client, **kwargs):
     rebootAgents = discoverDependents()
     
     # If less than 1 node was discovered, that's a problem...
-    ctx.logger.info('{0} nodes discovered' . format(len(rebootAgents)))
+    ctx.logger.info('{0} node(s) discovered' . format(len(rebootAgents)))
     if len(rebootAgents) < 1:
         raise NonRecoverableError('Reboot plugin requires at least 1 dependent node')
 
     # Populate an array of IPs
     for rebootAgent in rebootAgents:
+        ctx.logger.info('Querying Nova for {0}' . format(rebootAgent['ip']))
+        
         servers = nova_client.servers.list(
             search_opts = {
                 'ip': rebootAgent['ip'] 
             }
         )
         
+        ctx.logger.info('Nova returned {0} results: {1}' . format(
+            len(servers),
+            servers
+        ))
+        
         if len(servers) > 0:
-            server = servers[0]
-            
-            try:
-                ctx.logger.info(' {0} interfaces: {1}' . format(
-                    rebootAgent['ip'],
-                    server.interface_list()
-                ))
-            except:
-                ctx.logger.info(' Reading interfaces failed')
-            
-            try:
-                ctx.logger.info(' {0} networks: {1}' . format(
-                    rebootAgent['ip'],
-                    server.networks
-                ))
-            except:
-                ctx.logger.info(' Reading networks failed')
-            
-            try:
-                ctx.logger.info(' {0} diagnostics: {1}' . format(
-                    rebootAgent['ip'],
-                    server.diagnostics()
-                ))
-            except:
-                ctx.logger.info(' Reading diagnostics failed')
+            for server in servers:
+                try:
+                    ctx.logger.info(' {0} interfaces: {1}' . format(
+                        rebootAgent['ip'],
+                        server.interface_list()
+                    ))
+                except:
+                    ctx.logger.info(' Reading interfaces failed')
                 
-            server.reboot()
-            
-            sleep(2)
-            
-            try:
-                ctx.logger.info(' {0} diagnostics-post: {1}' . format(
-                    rebootAgent['ip'],
-                    server.diagnostics()
-                ))
-            except:
-                ctx.logger.info(' Reading diagnostics failed')
+                try:
+                    ctx.logger.info(' {0} networks: {1}' . format(
+                        rebootAgent['ip'],
+                        server.networks
+                    ))
+                except:
+                    ctx.logger.info(' Reading networks failed')
+                
+                try:
+                    ctx.logger.info(' {0} diagnostics: {1}' . format(
+                        rebootAgent['ip'],
+                        server.diagnostics()
+                    ))
+                except:
+                    ctx.logger.info(' Reading diagnostics failed')
+                
+                try:
+                    server.reboot()
+                except:
+                    ctx.logger.info(' Rebooting server failed')
+                
+                sleep(2)
+                
+                try:
+                    ctx.logger.info(' {0} diagnostics-post: {1}' . format(
+                        rebootAgent['ip'],
+                        server.diagnostics()
+                    ))
+                except:
+                    ctx.logger.info(' Reading diagnostics failed')
         else:
             ctx.logger.info('{0} was not found' . format(rebootAgent['ip']))
     
