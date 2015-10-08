@@ -122,6 +122,7 @@ def configure(nova_client, **kwargs):
                         agents_rebooted += 1
                     else:
                         ctx.logger.info('{0} has not yet started rebooting' . format(rebootAgent['ip']))
+                        return
             sleep(1)
     
     # Spin until all agents have started responding again (finished rebooting)
