@@ -87,6 +87,13 @@ def configure(nova_client, **kwargs):
         if len(servers) > 0:
             for server in servers:
                 try:
+                    ctx.logger.info(' Properties: {0}' . format(
+                        vars(server)
+                    ))
+                except:
+                    ctx.logger.info(' Printing attributes failed')
+                
+                try:
                     ctx.logger.info(' {0} interfaces: {1}' . format(
                         rebootAgent['ip'],
                         server.interface_list()
@@ -145,7 +152,6 @@ def configure(nova_client, **kwargs):
                         agents_rebooted += 1
                     else:
                         ctx.logger.info('{0} has not yet started rebooting' . format(rebootAgent['ip']))
-                        return
             sleep(1)
     
     # Spin until all agents have started responding again (finished rebooting)
