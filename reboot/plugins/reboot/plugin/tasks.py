@@ -86,51 +86,19 @@ def configure(nova_client, **kwargs):
         
         if len(servers) > 0:
             for server in servers:
-                try:
+                ctx.logger.info(' Properties: {0}' . format(
+                    vars(server)
+                ))
+            
+                ctx.logger.info('Rebooting {0}' . format(rebootAgent['ip']))
+                server.reboot()
+                
+                while server['status'] == 'ACTIVE':
                     ctx.logger.info(' Properties: {0}' . format(
                         vars(server)
                     ))
-                except:
-                    ctx.logger.info(' Printing attributes failed')
-                
-                try:
-                    ctx.logger.info(' {0} interfaces: {1}' . format(
-                        rebootAgent['ip'],
-                        server.interface_list()
-                    ))
-                except:
-                    ctx.logger.info(' Reading interfaces failed')
-                
-                try:
-                    ctx.logger.info(' {0} networks: {1}' . format(
-                        rebootAgent['ip'],
-                        server.networks
-                    ))
-                except:
-                    ctx.logger.info(' Reading networks failed')
-                
-                try:
-                    ctx.logger.info(' {0} diagnostics: {1}' . format(
-                        rebootAgent['ip'],
-                        server.diagnostics()
-                    ))
-                except:
-                    ctx.logger.info(' Reading diagnostics failed')
-                
-                try:
-                    server.reboot()
-                except:
-                    ctx.logger.info(' Rebooting server failed')
-                
-                sleep(2)
-                
-                try:
-                    ctx.logger.info(' {0} diagnostics-post: {1}' . format(
-                        rebootAgent['ip'],
-                        server.diagnostics()
-                    ))
-                except:
-                    ctx.logger.info(' Reading diagnostics failed')
+                    
+                    sleep(5)
         else:
             ctx.logger.info('{0} was not found' . format(rebootAgent['ip']))
     
