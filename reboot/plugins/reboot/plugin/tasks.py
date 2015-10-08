@@ -77,7 +77,7 @@ def configure(nova_client, **kwargs):
             }
         )
         
-        if len(server) > 0:
+        if len(servers) > 0:
             server = servers[0]
             
             ctx.logger.info(' {0} interfaces: {1}' . format(
