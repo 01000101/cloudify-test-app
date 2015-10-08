@@ -69,20 +69,17 @@ def configure(nova_client, **kwargs):
     if len(rebootAgents) < 1:
         raise NonRecoverableError('Reboot plugin requires at least 1 dependent node')
     
-    nova_search_opts = {
-        'ip': []
-    }
+    nova_search_opts = []
     
     # Populate an array of IPs
     for rebootAgent in rebootAgents:
-        nova_search_opts['ip'].append(rebootAgent['ip'])
+        nova_search_opts.append(rebootAgent['ip'])
     
     # Find the Nova instances
-    server_list = nova_client.servers.list(
-        search_opts = nova_search_opts
-    )
+    server_list = nova_client.servers.list()
+    ctx.logger.info('server_list: {0}' . format(nova_client.servers.list()))
+    ctx.logger.info('server_listx: {0}' . format(nova_client.servers.list(search_opts={'ip': nova_search_opts[0]})))
     
-    ctx.logger.info('server_list: {0}' . format(server_list))
     
     # Wait for all systems to go dark
     if ctx.operation.retry_number == 0:
