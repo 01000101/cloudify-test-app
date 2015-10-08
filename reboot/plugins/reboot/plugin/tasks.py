@@ -6,7 +6,6 @@ This plugin is used to allow for graceful rebooting of dependent instances
 import os
 from time import sleep
 import socket
-import novaclient
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
@@ -58,9 +57,6 @@ def agentIsAlive(agent):
 @operation
 def configure(**kwargs):
     global rebootAgents
-    
-    # Get the provider_context for OpenStack Nova communication
-    ctx.logger.info('provider_context: {0}' . format(ctx.provider_context))
     
     ctx.logger.info('Discovering dependent nodes')
     rebootAgents = discoverDependents()
