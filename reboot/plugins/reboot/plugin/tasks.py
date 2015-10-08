@@ -9,7 +9,7 @@ import socket
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
-import openstack_plugin_common
+from openstack_plugin_common import with_nova_client
 
 # Metadata
 __author__ =     "Joshua Cornutt"
