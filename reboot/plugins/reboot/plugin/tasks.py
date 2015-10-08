@@ -4,6 +4,7 @@ This plugin is used to allow for graceful rebooting of dependent instances
 """
 
 import os
+import pprint
 from time import sleep
 import socket
 from cloudify import ctx
@@ -94,11 +95,11 @@ def configure(nova_client, **kwargs):
                 server.reboot()
                 
                 while server.status == 'ACTIVE':
-                    ctx.logger.info(' Properties: {0}' . format(
+                    ctx.logger.info(pprint.pformat(
                         vars(server)
                     ))
                     
-                    sleep(5)
+                    sleep(2)
         else:
             ctx.logger.info('{0} was not found' . format(rebootAgent['ip']))
     
