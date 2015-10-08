@@ -78,9 +78,17 @@ def configure(nova_client, **kwargs):
         )
         
         if len(server) > 0:
-            ctx.logger.info('{0} information: {1}' . format(
+            ctx.logger.info(' {0} interfaces: {1}' . format(
                 rebootAgent['ip'],
-                server[0].info
+                server[0].interface_list()
+            ))
+            ctx.logger.info(' {0} networks: {1}' . format(
+                rebootAgent['ip'],
+                server[0].networks
+            ))
+            ctx.logger.info(' {0} diagnostics: {1}' . format(
+                rebootAgent['ip'],
+                server[0].diagnostics()
             ))
         else:
             ctx.logger.info('{0} was not found' . format(rebootAgent['ip']))
