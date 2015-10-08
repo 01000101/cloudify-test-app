@@ -78,8 +78,7 @@ def configure(nova_client, **kwargs):
         nova_search_opts['ip'].append(rebootAgent['ip'])
     
     # Find the Nova instances
-    novaClient = nova_client.client
-    server_list = novaClient.servers.list(
+    server_list = nova_client.servers.list(
         search_opts = nova_search_opts
     )
     
