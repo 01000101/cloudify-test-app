@@ -73,7 +73,7 @@ def configure(nova_client, **kwargs):
     for rebootAgent in rebootAgents:
         servers = nova_client.servers.list(
             search_opts = {
-                'ip': rebootAgent['ip']
+                'ip': rebootAgent['ip'] 
             }
         )
         
