@@ -34,10 +34,9 @@ def discoverDependents():
     
     return node_list
 
-@with_nova_client
-def spinUntilRebootStart(nova_client, server, timeout=60, sleep_interval=2):
+def spinUntilRebootStart(nova_client, server_id, timeout=60, sleep_interval=2):
     ctx.logger.info('Waiting for {0} to start rebooting (timeout={1}, interval={2}s)' . format(
-        server.id,
+        server_id,
         timeout,
         sleep_interval
     ))
@@ -45,7 +44,7 @@ def spinUntilRebootStart(nova_client, server, timeout=60, sleep_interval=2):
     # Spin until it goes down and reports back up
     for i in range(1, timeout, 1):
         # Query the server details
-        server = nova_client.servers.get(server.id)
+        server = nova_client.servers.get(server_id)
         
         # If it's not in REBOOT state, it hasn't started rebooting yet
         if server.status == 'REBOOT':
@@ -53,7 +52,7 @@ def spinUntilRebootStart(nova_client, server, timeout=60, sleep_interval=2):
                 i,
                 timeout,
                 server.status,
-                server.id
+                server_id
             ))
             
             break
@@ -62,18 +61,17 @@ def spinUntilRebootStart(nova_client, server, timeout=60, sleep_interval=2):
                 i,
                 timeout,
                 server.status,
-                server.id
+                server_id
             ))
         
         # Sleep
         sleep(sleep_interval)
         
-    NonRecoverableError('Timed out waiting for {0} to start rebooting' . format(server.id))
+    NonRecoverableError('Timed out waiting for {0} to start rebooting' . format(server_id))
 
-@with_nova_client
-def spinUntilRebootEnd(nova_client, server, timeout=60, sleep_interval=2):
+def spinUntilRebootEnd(nova_client, server_id, timeout=60, sleep_interval=2):
     ctx.logger.info('Waiting for {0} to finish rebooting (timeout={1}, interval={2}s)' . format(
-        server.id,
+        server_id,
         timeout,
         sleep_interval
     ))
@@ -81,7 +79,7 @@ def spinUntilRebootEnd(nova_client, server, timeout=60, sleep_interval=2):
     # Spin until it goes down and reports back up
     for i in range(1, timeout, 1):
         # Query the server details
-        server = nova_client.servers.get(server.id)
+        server = nova_client.servers.get(server_id)
         
         # If it's not in ACTIVE state, it hasn't finished rebooting yet
         if server.status == 'ACTIVE':
@@ -89,7 +87,7 @@ def spinUntilRebootEnd(nova_client, server, timeout=60, sleep_interval=2):
                 i,
                 timeout,
                 server.status,
-                server.id
+                server_id
             ))
             
             break
@@ -98,13 +96,13 @@ def spinUntilRebootEnd(nova_client, server, timeout=60, sleep_interval=2):
                 i,
                 timeout,
                 server.status,
-                server.id
+                server_id
             ))
         
         # Sleep
         sleep(sleep_interval)
         
-    NonRecoverableError('Timed out waiting for {0} to finish rebooting' . format(server.id))
+    NonRecoverableError('Timed out waiting for {0} to finish rebooting' . format(server_id))
 
 # Entry point for the Facilitator
 @operation
@@ -150,8 +148,8 @@ def configure(nova_client, **kwargs):
         # Reboot the server
         ctx.logger.info('Rebooting {0}' . format(rebootAgent['ip']))
         server.reboot()
-        spinUntilRebootStart(server)
-        spinUntilRebootEnd(server)
+        spinUntilRebootStart(nova_client, server.id)
+        spinUntilRebootEnd(nova_client, server.id)
         
         
     # Sleep... ZZzzz
