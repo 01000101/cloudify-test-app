@@ -1,3 +1,7 @@
+## Final result: hosts -> pre-reboot apps -> wait for reboots -> post-reboot apps
+## host_01 -> app_prereboot_01 -> reboot_module -> app_postreboot_01
+## host_02 -> app_prereboot_02 /                 \ app_postreboot_02
+
 tosca_definitions_version: cloudify_dsl_1_1
 
 # Import common definitions
@@ -25,38 +29,68 @@ node_types:
     properties:
       image: { default: { get_input: server_image_id } }
       flavor: { default: { get_input: server_image_flavor } }
+      
+  local.nodes.ApplicationModule_PreReboot:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/prereboot.py
+        
+  local.nodes.ApplicationModule_PostReboot:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/postreboot.py
         
 # Actual server / app deployment definitions
 node_templates:
-  # VM
+  # Create the VMs (parallelized)
   host_01:
     type: local.nodes.Server
     properties:
       resource_id: Reboot-Host-01
+      
+  host_02:
+    type: local.nodes.Server
+    properties:
+      resource_id: Reboot-Host-02
         
-  # Some application that runs pre-reboot
-  myapplication_01:
-    type: cloudify.nodes.ApplicationModule
+  # Some applications that run pre-reboot (parallelized)
+  app_prereboot_01:
+    type: local.nodes.ApplicationModule_PreReboot
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_01
+        
+  app_prereboot_02:
+    type: local.nodes.ApplicationModule_PreReboot
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host_02
   
-  # This causes a graceful reboot and ends when the system is back online
+  # This causes a graceful reboot of the host of any dependencies (serializing)
   reboot_module:
     type: reboot.nodes.Facilitator
     relationships:
       - type: cloudify.relationships.depends_on
-        target: myapplication_01
+        target: app_prereboot_01
+      - type: cloudify.relationships.depends_on
+        target: app_prereboot_02
   
-  # This will execute as soon as the reboot is complete
-  postreboot_module:
-    type: cloudify.nodes.ApplicationModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure: scripts/postreboot.py
+  # This will execute as soon as all reboots are complete (parallelized)
+  app_postreboot_01:
+    type: local.nodes.ApplicationModule_PostReboot
     relationships:
       - type: cloudify.relationships.contained_in
         target: host_01
+      - type: cloudify.relationships.depends_on
+        target: reboot_module
+        
+  app_postreboot_02:
+    type: local.nodes.ApplicationModule_PostReboot
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host_02
       - type: cloudify.relationships.depends_on
         target: reboot_module
   
