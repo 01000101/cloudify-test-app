@@ -34,7 +34,8 @@ def discoverDependents():
     
     return node_list
 
-def spinUntilRebootStart(server, timeout=60, sleep_interval=2):
+@with_nova_client
+def spinUntilRebootStart(nova_client, server, timeout=60, sleep_interval=2):
     ctx.logger.info('Waiting for {0} to start rebooting (timeout={1}, interval={2}s)' . format(
         server.id,
         timeout,
@@ -69,7 +70,8 @@ def spinUntilRebootStart(server, timeout=60, sleep_interval=2):
         
     NonRecoverableError('Timed out waiting for {0} to start rebooting' . format(server.id))
 
-def spinUntilRebootEnd(server, timeout=60, sleep_interval=2):
+@with_nova_client
+def spinUntilRebootEnd(nova_client, server, timeout=60, sleep_interval=2):
     ctx.logger.info('Waiting for {0} to finish rebooting (timeout={1}, interval={2}s)' . format(
         server.id,
         timeout,
