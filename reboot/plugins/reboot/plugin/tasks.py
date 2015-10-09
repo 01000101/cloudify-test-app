@@ -4,7 +4,6 @@ This plugin is used to allow for graceful rebooting of dependent instances
 """
 
 import os
-import pprint
 from time import sleep
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
@@ -35,6 +34,76 @@ def discoverDependents():
     
     return node_list
 
+def spinUntilRebootStart(server, timeout=60, sleep_interval=2):
+    ctx.logger.info('Waiting for {0} to start rebooting (timeout={1}, interval={2}s)' . format(
+        server.id,
+        timeout,
+        sleep_interval
+    ))
+    
+    # Spin until it goes down and reports back up
+    for i in range(1, timeout, 1):
+        # Query the server details
+        server = nova_client.servers.get(server.id)
+        
+        # If it's not in REBOOT state, it hasn't started rebooting yet
+        if server.status == 'REBOOT':
+            ctx.logger.info('[{0}/{1}, STATUS:{2}] {3} has started rebooting' . format(
+                i,
+                timeout,
+                server.status,
+                server.id
+            ))
+            
+            break
+        else:
+            ctx.logger.info('[{0}/{1}, STATUS:{2}] Waiting for {3} to start rebooting' . format(
+                i,
+                timeout,
+                server.status,
+                server.id
+            ))
+        
+        # Sleep
+        sleep(sleep_interval)
+        
+    NonRecoverableError('Timed out waiting for {0} to start rebooting' . format(server.id))
+
+def spinUntilRebootEnd(server, timeout=60, sleep_interval=2):
+    ctx.logger.info('Waiting for {0} to finish rebooting (timeout={1}, interval={2}s)' . format(
+        server.id,
+        timeout,
+        sleep_interval
+    ))
+    
+    # Spin until it goes down and reports back up
+    for i in range(1, timeout, 1):
+        # Query the server details
+        server = nova_client.servers.get(server.id)
+        
+        # If it's not in ACTIVE state, it hasn't finished rebooting yet
+        if server.status == 'ACTIVE':
+            ctx.logger.info('[{0}/{1}, STATUS:{2}] {3} has finished rebooting' . format(
+                i,
+                timeout,
+                server.status,
+                server.id
+            ))
+            
+            break
+        else:
+            ctx.logger.info('[{0}/{1}, STATUS:{2}] Waiting for {3} to finish rebooting' . format(
+                i,
+                timeout,
+                server.status,
+                server.id
+            ))
+        
+        # Sleep
+        sleep(sleep_interval)
+        
+    NonRecoverableError('Timed out waiting for {0} to finish rebooting' . format(server.id))
+
 # Entry point for the Facilitator
 @operation
 @with_nova_client
@@ -56,14 +125,17 @@ def configure(nova_client, **kwargs):
             rebootAgent['ip']
         ))
         
+        # Get a server with the specified IP
         servers = nova_client.servers.list(
+            detailed = False,
             search_opts = {
                 'ip': rebootAgent['ip'] 
             }
         )
         
+        # If no servers (or... too many?) were returned, skip this one
         if len(servers) != 1:
-            ctx.logger.info('Multiple results returned for server {0}' . format(
+            ctx.logger.info('Missing, or too many, results returned for server {0}' . format(
                 rebootAgent['ip']
             ))
             ctx.logger.info('Skipping {0}' . format(
@@ -73,25 +145,13 @@ def configure(nova_client, **kwargs):
         
         server = servers[0]
         
+        # Reboot the server
         ctx.logger.info('Rebooting {0}' . format(rebootAgent['ip']))
         server.reboot()
-            
-        reboot_timeout = 30
-        while reboot_timeout > 0:
-            ctx.logger.info('Querying state of {0}' . format(rebootAgent['ip']))
-            server = nova_client.servers.get(server.id)
-            
-            ctx.logger.info(pprint.pformat(
-                vars(server)
-            ))
-            
-            if server.status != 'ACTIVE':
-                break
-            else:
-                reboot_timeout -= 1
-                sleep(2)
+        spinUntilRebootStart(server)
+        spinUntilRebootEnd(server)
         
         
     # Sleep... ZZzzz
-    ctx.logger.info('Sleeping for 30 seconds')
+    ctx.logger.info('Sleeping for 30 seconds to let servers finish post-boot tasks')
     sleep(30)
