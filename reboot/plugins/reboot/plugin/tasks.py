@@ -153,5 +153,5 @@ def configure(nova_client, **kwargs):
         
         
     # Sleep... ZZzzz
-    ctx.logger.info('Sleeping for 30 seconds to let servers finish post-boot tasks')
-    sleep(30)
+    ctx.logger.info('Sleeping for 120 seconds to let servers finish post-boot tasks')
+    sleep(120)
