@@ -8,7 +8,7 @@ setup(
     author_email='josh@gigaspaces.com',
     packages=['plugin'],
     install_requires=[
-        'cloudify-plugins-common>=3.2.1',
-        'cloudify-openstack-plugin>=1.2.1'
-    ],
+        'cloudify-plugins-common>=3.2',
+        'cloudify-openstack-plugin>=1.2'
+    ]
 )

@@ -1,0 +1,23 @@
+tosca_definitions_version: cloudify_dsl_1_1
+
+plugins:
+  affinity_facilitator:
+    executor: central_deployment_agent
+    source: affinity
+  
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.2.1/types.yaml
+  
+node_types:
+  affinity.nodes.Facilitator:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_all_vms:
+        default: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: affinity_facilitator.plugin.tasks.configure
+        delete:
+          implementation: affinity_facilitator.plugin.tasks.delete
+          

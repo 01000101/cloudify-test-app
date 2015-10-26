@@ -6,7 +6,7 @@ plugins:
     source: reboot
   
 imports:
-  - http://www.getcloudify.org/spec/cloudify/3.2.1/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/3.2/types.yaml
   
 node_types:
   reboot.nodes.Facilitator:

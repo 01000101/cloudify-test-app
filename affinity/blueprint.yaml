@@ -1,0 +1,42 @@
+tosca_definitions_version: cloudify_dsl_1_1
+
+# Import common definitions
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.2.1/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/1.2.1/plugin.yaml
+  - plugins/affinity/plugin.yaml
+
+# Inputs
+inputs:
+  server_image_id:
+    default: 564be9dd-5a06-4a26-ba50-9453f972e483
+    type: string
+    description: |
+      OpenStack image UUID for the host servers
+
+  server_image_flavor: 
+    default: 101
+    type: integer
+    description: |
+      OpenStack image flavor code for the host servers
+
+# Types
+node_types:
+  local.nodes.Server:
+    derived_from: cloudify.openstack.nodes.Server
+    properties: 
+      image: { default: { get_input: "server_image_id" } }
+      flavor: { default: { get_input: "server_image_flavor" } }
+        
+# Actual server / app deployment definitions
+node_templates:
+  affinity_module:
+    type: affinity.nodes.Facilitator
+    
+  host_01:
+    type: local.nodes.Server
+    properties:
+      resource_id: Dummy-01
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: affinity_module

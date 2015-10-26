@@ -2,135 +2,102 @@
 ## host_01 -> app_prereboot_01 -> reboot_module -> app_postreboot_01
 ## host_02 -> app_prereboot_02 /                 \ app_postreboot_02
 
-tosca_definitions_version: "cloudify_dsl_1_1"
+tosca_definitions_version: cloudify_dsl_1_1
 
 # Import common definitions
-imports: [
-  "http://www.getcloudify.org/spec/cloudify/3.2.1/types.yaml",
-  "http://www.getcloudify.org/spec/openstack-plugin/1.2.1/plugin.yaml",
-  "plugins/reboot/plugin.yaml"
-]
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.2/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/1.2/plugin.yaml
+  - plugins/reboot/plugin.yaml
 
 # Inputs
-inputs: {
-  server_image_id: {
-    default: "564be9dd-5a06-4a26-ba50-9453f972e483",
-    type: "string",
-    description: "OpenStack image UUID for the host servers"
-  },
-  server_image_flavor: {
-    default: 101,
-    type: "integer",
-    description: "OpenStack image flavor code for the host servers"
-  }
-}
+inputs:
+  server_image_id:
+    # default: 564be9dd-5a06-4a26-ba50-9453f972e483 (Ubuntu 14.04)
+    # default: 202e7659-f7c6-444a-8b32-872fe2ed080c (CentOS 6.3)
+    default: 202e7659-f7c6-444a-8b32-872fe2ed080c
+    type: string
+    description: |
+      OpenStack image UUID for the host servers
+
+  server_image_flavor: 
+    default: 101
+    type: integer
+    description: |
+      OpenStack image flavor code for the host servers
 
 # Types
-node_types: {
-  local.nodes.Server: {
-    derived_from: "cloudify.openstack.nodes.Server",
-    properties: {
-      image: { default: { get_input: "server_image_id" } },
+node_types:
+  local.nodes.Server:
+    derived_from: cloudify.openstack.nodes.Server
+    properties: 
+      image: { default: { get_input: "server_image_id" } }
       flavor: { default: { get_input: "server_image_flavor" } }
-    }
-  },
-  local.nodes.ApplicationModule_PreReboot: {
-    derived_from: "cloudify.nodes.ApplicationModule",
-    interfaces: {
-      cloudify.interfaces.lifecycle: {
-        configure: "scripts/prereboot.py"
-      }
-    }
-  },
-  local.nodes.ApplicationModule_PostReboot: {
-    derived_from: "cloudify.nodes.ApplicationModule",
-    interfaces: {
-      cloudify.interfaces.lifecycle: {
-        configure: "scripts/postreboot.py"
-      }
-    }
-  }
-}
+
+  local.nodes.ApplicationModule_PreReboot:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/prereboot.py
+
+  local.nodes.ApplicationModule_PostReboot:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure: scripts/postreboot.py
 
 # Actual server / app deployment definitions
-node_templates: {
+node_templates:
   # Create the VMs (parallelized)
-  host_01: {
-    type: "local.nodes.Server",
-    properties: {
-      resource_id: "Reboot-Host-01"
-    }
-  },
+  host_01:
+    type: local.nodes.Server
+    properties:
+      resource_id: Reboot-Host-01
+      cloudify_agent:
+        user: root
       
-  host_02: {
-    type: "local.nodes.Server",
-    properties: {
-      resource_id: "Reboot-Host-02"
-    }
-  },
+  host_02:
+    type: local.nodes.Server
+    properties:
+      resource_id: Reboot-Host-02
+      cloudify_agent:
+        user: root
         
   # Some applications that run pre-reboot (parallelized)
-  app_prereboot_01: {
-    type: "local.nodes.ApplicationModule_PreReboot",
-    relationships: [
-      {
-        type: "cloudify.relationships.contained_in",
-        target: "host_01"
-      }
-    ]
-  },
+  app_prereboot_01:
+    type: local.nodes.ApplicationModule_PreReboot
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host_01
         
-  app_prereboot_02: {
-    type: "local.nodes.ApplicationModule_PreReboot",
-    relationships: [
-      {
-        type: "cloudify.relationships.contained_in",
-        target: "host_02"
-      }
-    ]
-  },
+  app_prereboot_02:
+    type: local.nodes.ApplicationModule_PreReboot
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host_02
   
   # This causes a graceful reboot of the host of any dependencies (serializing)
-  reboot_module: {
-    type: "reboot.nodes.Facilitator",
-    relationships: [
-      {
-        type: "cloudify.relationships.depends_on",
-        target: "app_prereboot_01"
-      },
-      {
-        type: "cloudify.relationships.depends_on",
-        target: "app_prereboot_02"
-      }
-    ]
-  },
+  reboot_module:
+    type: reboot.nodes.Facilitator
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: app_prereboot_01
+      - type: cloudify.relationships.depends_on
+        target: app_prereboot_02
   
   # This will execute as soon as all reboots are complete (parallelized)
-  app_postreboot_01: {
-    type: "local.nodes.ApplicationModule_PostReboot",
-    relationships: [
-      {
-        type: "cloudify.relationships.contained_in",
-        target: "host_01"
-      },
-      {
-        type: "cloudify.relationships.depends_on",
-        target: "reboot_module"
-      }
-    ]
-  },
+  app_postreboot_01:
+    type: local.nodes.ApplicationModule_PostReboot
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host_01
+      - type: cloudify.relationships.depends_on
+        target: reboot_module
         
-  app_postreboot_02: {
-    type: "local.nodes.ApplicationModule_PostReboot",
-    relationships: [
-      {
-        type: "cloudify.relationships.contained_in",
-        target: "host_02"
-      },
-      {
-        type: "cloudify.relationships.depends_on",
-        target: "reboot_module"
-      }
-    ]
-  }
-}
+  app_postreboot_02:
+    type: local.nodes.ApplicationModule_PostReboot
+    relationships: 
+      - type: cloudify.relationships.contained_in
+        target: host_02
+      - type: cloudify.relationships.depends_on
+        target: reboot_module
